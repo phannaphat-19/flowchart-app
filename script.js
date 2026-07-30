@@ -2152,8 +2152,13 @@
             infoText.textContent = 'i';
             infoBadge.appendChild(infoText);
 
+            infoBadge.addEventListener('mousedown', (e) => {
+                e.stopPropagation();
+            });
+
             infoBadge.addEventListener('click', (e) => {
                 e.stopPropagation();
+                e.preventDefault();
                 selectItem('node', node.id);
                 openSubflowModal(node);
             });
@@ -2316,7 +2321,7 @@
 
     function selectItem(type, id, triggerModal = false) {
         state.selectedItem = { type, id };
-        renderCanvas();
+        updateSelectionUI();
         renderInspector();
 
         if (triggerModal && type === 'node') {
@@ -2326,6 +2331,19 @@
                 openSubflowModal(node);
             }
         }
+    }
+
+    function updateSelectionUI() {
+        document.querySelectorAll('.flow-node-group').forEach(g => {
+            const nodeId = g.getAttribute('data-id');
+            const isSel = state.selectedItem && state.selectedItem.type === 'node' && state.selectedItem.id === nodeId;
+            g.classList.toggle('selected', isSel);
+        });
+        document.querySelectorAll('.flow-connection-group').forEach(g => {
+            const connId = g.getAttribute('data-id');
+            const isSel = state.selectedItem && state.selectedItem.type === 'connection' && state.selectedItem.id === connId;
+            g.classList.toggle('selected', isSel);
+        });
     }
 
     function deselectAll() {
@@ -2393,8 +2411,17 @@
                         renderCanvas();
                         saveHistoryState();
                     } else {
-                        // SINGLE CLICK -> Select Node ONLY (Allows editing in Inspector)
                         selectItem('node', node.id, false);
+                        // Double Click Timestamp Check
+                        const now = Date.now();
+                        if (node._lastClickTime && (now - node._lastClickTime < 450)) {
+                            node._lastClickTime = 0;
+                            if (node.type !== 'swimlane' && node.type !== 'department' && !node.type.startsWith('issue-')) {
+                                openSubflowModal(node);
+                            }
+                        } else {
+                            node._lastClickTime = now;
+                        }
                     }
                 }
             };
