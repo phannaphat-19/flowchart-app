@@ -909,13 +909,27 @@
             }
         }
 
-        const cleanTitle = displayNode.text ? displayNode.text.replace(/\n/g, ' ') : 'กล่องกระบวนการ';
+        const cleanTitle = node.text ? node.text.replace(/\n/g, ' ') : 'กล่องกระบวนการ';
         const titleElem = getElem('modal-node-title');
         if (titleElem) titleElem.textContent = cleanTitle;
 
-        renderOriginalBoxPreview(displayNode);
+        renderOriginalBoxPreview(node);
         const leftText = getElem('modal-left-text');
-        if (leftText) leftText.value = displayNode.text || '';
+        if (leftText) leftText.value = node.text || '';
+
+        const modalSharedSelect = getElem('modal-shared-flow-select');
+        if (modalSharedSelect) {
+            modalSharedSelect.innerHTML = '<option value="">-- ใช้ผังย่อยของกล่องตัวเอง (Default) --</option>';
+            state.pages.forEach(pg => {
+                pg.nodes.filter(n => n.id !== node.id && !n.type.startsWith('issue-') && n.type !== 'swimlane' && n.type !== 'department').forEach(otherNode => {
+                    const opt = document.createElement('option');
+                    opt.value = otherNode.id;
+                    opt.textContent = `🔗 ${otherNode.text ? otherNode.text.replace(/\n/g, ' ') : 'กล่องกระบวนการ'}`;
+                    if (node.linkTargetNodeId === otherNode.id) opt.selected = true;
+                    modalSharedSelect.appendChild(opt);
+                });
+            });
+        }
         
         const descText = getElem('modal-desc');
         if (descText) descText.value = displayNode.details.desc || '';
@@ -1514,6 +1528,21 @@
         const btnDelSub = getElem('btn-del-subnode');
         const btnSave = getElem('btn-save-subflow-modal');
         const btnJumpPage = getElem('btn-modal-jump-page');
+
+        const modalSharedSelect = getElem('modal-shared-flow-select');
+        if (modalSharedSelect) {
+            modalSharedSelect.addEventListener('change', () => {
+                if (state.selectedItem?.type === 'node') {
+                    const node = getCurrentPage().nodes.find(n => n.id === state.selectedItem.id);
+                    if (node) {
+                        node.linkTargetNodeId = modalSharedSelect.value;
+                        openSubflowModal(node, false);
+                        renderCanvas();
+                        saveHistoryState();
+                    }
+                }
+            });
+        }
 
         const btnBack = getElem('btn-modal-back');
         if (btnBack) btnBack.addEventListener('click', popSubflowModalBack);
