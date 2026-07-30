@@ -2769,6 +2769,36 @@
             });
         }
 
+        const colorSwatchesContainer = getElem('node-color-swatches');
+        if (colorSwatchesContainer) {
+            colorSwatchesContainer.querySelectorAll('.color-swatch-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (state.selectedItem?.type === 'node') {
+                        const node = getCurrentPage().nodes.find(n => n.id === state.selectedItem.id);
+                        if (node) {
+                            const bg = btn.getAttribute('data-bg');
+                            const border = btn.getAttribute('data-border');
+                            const textCol = btn.getAttribute('data-text');
+
+                            if (bg) node.bgColor = bg;
+                            if (border) node.borderColor = border;
+                            if (textCol) node.textColor = textCol;
+
+                            const bgInput = getElem('node-bg-color');
+                            const borderInput = getElem('node-border-color');
+                            const textInput = getElem('node-text-color');
+                            if (bgInput && bg) bgInput.value = bg;
+                            if (borderInput && border) borderInput.value = border;
+                            if (textInput && textCol) textInput.value = textCol;
+
+                            renderCanvas();
+                            saveHistoryState();
+                        }
+                    }
+                });
+            });
+        }
+
         const connTextInput = getElem('conn-text-input');
         const connStyleSelect = getElem('conn-style-select');
         const connColor = getElem('conn-color');
