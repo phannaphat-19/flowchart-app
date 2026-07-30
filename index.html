@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Flowchart Studio - ระบบเขียนผังงาน & เส้นโยงที่มาของปัญหา</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="light-theme">
+    <!-- Top Navigation Bar -->
+    <header class="app-header">
+        <div class="header-left">
+            <div class="logo">
+                <i class="fa-solid fa-diagram-project"></i>
+                <span>FlowStudio Pro</span>
+                <span class="badge">Issue Link Pointer Lines</span>
+            </div>
+            <div class="divider"></div>
+            <!-- File Action Controls -->
+            <div class="action-group">
+                <button id="btn-new" class="icon-btn" title="สร้างใหม่ (New Project)">
+                    <i class="fa-solid fa-file-circle-plus"></i>
+                </button>
+                <button id="btn-open" class="icon-btn" title="เปิดไฟล์ (Open File - JSON)">
+                    <i class="fa-solid fa-folder-open"></i>
+                </button>
+                <input type="file" id="file-input" accept=".json" style="display:none;">
+                <button id="btn-save" class="icon-btn" title="บันทึกไฟล์ (Save File - JSON)">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                </button>
+                <div class="dropdown">
+                    <button id="btn-export" class="icon-btn" title="ส่งออกรูปภาพ (Export Image)">
+                        <i class="fa-solid fa-download"></i>
+                    </button>
+                    <div class="dropdown-menu">
+                        <a href="#" id="export-png"><i class="fa-solid fa-file-image"></i> Export PNG (ไฟล์รูป)</a>
+                        <a href="#" id="export-svg"><i class="fa-solid fa-bezier-curve"></i> Export SVG (ไฟล์เวกเตอร์)</a>
+                    </div>
+                </div>
+            </div>
+            <div class="divider"></div>
+            <!-- History Controls -->
+            <div class="action-group">
+                <button id="btn-undo" class="icon-btn" title="เลิกทำ (Undo - Ctrl+Z)" disabled>
+                    <i class="fa-solid fa-rotate-left"></i>
+                </button>
+                <button id="btn-redo" class="icon-btn" title="ทำซ้ำ (Redo - Ctrl+Y)" disabled>
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
+            </div>
+            <div class="divider"></div>
+            <!-- ISSUE DASHBOARD REPORT TRIGGER -->
+            <button id="btn-issue-dashboard" class="btn-issue-dashboard-trigger" title="ดูสรุปรายการปัญหาทั้งหมด (Issue Dashboard)">
+                <i class="fa-solid fa-flag"></i> 📊 สรุปรวมปัญหา (Issue Summary Report)
+            </button>
+        </div>
+
+        <div class="header-center">
+            <span id="project-title" contenteditable="true" spellcheck="false">ผังกระบวนการทำงาน & เส้นโยงชี้ที่มาปัญหา (Issue Link Lines)</span>
+        </div>
+
+        <div class="header-right">
+            <!-- Canvas Zoom Controls -->
+            <div class="zoom-controls">
+                <button id="btn-zoom-out" class="icon-btn-sm" title="ย่อ (Zoom Out)"><i class="fa-solid fa-minus"></i></button>
+                <span id="zoom-level">100%</span>
+                <button id="btn-zoom-in" class="icon-btn-sm" title="ขยาย (Zoom In)"><i class="fa-solid fa-plus"></i></button>
+                <button id="btn-zoom-fit" class="icon-btn-sm" title="พอดีหน้าจอ (Reset Zoom)"><i class="fa-solid fa-expand"></i></button>
+            </div>
+            <div class="divider"></div>
+            <button id="btn-theme-toggle" class="icon-btn" title="เปลี่ยนธีม สว่าง/มืด (Toggle Theme)">
+                <i class="fa-solid fa-sun"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <div class="workspace">
+        <!-- Sidebar - Shape Palette & Library -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h3><i class="fa-solid fa-shapes"></i> เครื่องมือ & รูปทรง (Shapes)</h3>
+            </div>
+
+            <!-- DRAGGABLE ISSUE CARDS CATEGORY -->
+            <div class="shape-category" style="background: #fffbeb;">
+                <span class="category-title" style="color: #b45309;"><i class="fa-solid fa-flag"></i> การ์ดปัญหาแบบลากวาง (Issue Cards)</span>
+                <div class="shape-grid">
+                    <div class="shape-item" draggable="true" data-type="issue-red">
+                        <div class="shape-preview shape-issue-red">🚩 ปัญหา Red Flag<br><small>(Critical Issue)</small></div>
+                    </div>
+                    <div class="shape-item" draggable="true" data-type="issue-yellow">
+                        <div class="shape-preview shape-issue-yellow">🚩 ปัญหา Yellow Flag<br><small>(Warning Issue)</small></div>
+                    </div>
+                    <div class="shape-item" draggable="true" data-type="issue-green">
+                        <div class="shape-preview shape-issue-green">🟩 ปัญหา Green Flag<br><small>(Pass / Resolved)</small></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="shape-category">
+                <span class="category-title">สัญลักษณ์พื้นฐาน (Basic Shapes)</span>
+                <div class="shape-grid">
+                    <div class="shape-item" draggable="true" data-type="startend">
+                        <div class="shape-preview shape-startend">เริ่ม / จบ<br><small>Start / End</small></div>
+                    </div>
+                    <div class="shape-item" draggable="true" data-type="process">
+                        <div class="shape-preview shape-process">กระบวนการ<br><small>Process</small></div>
+                    </div>
+                    <div class="shape-item" draggable="true" data-type="decision">
+                        <div class="shape-preview shape-decision">เงื่อนไข<br><small>Decision</small></div>
+                    </div>
+                    <div class="shape-item" draggable="true" data-type="inputoutput">
+                        <div class="shape-preview shape-inputoutput">รับ/แสดงผล<br><small>Input / Output</small></div>
+                    </div>
+                    <div class="shape-item" draggable="true" data-type="document">
+                        <div class="shape-preview shape-document">เอกสาร<br><small>Document</small></div>
+                    </div>
+                    <div class="shape-item" draggable="true" data-type="connector">
+                        <div class="shape-preview shape-circle">จุดเชื่อม<br><small>Connector</small></div>
+                    </div>
+                    <div class="shape-item" draggable="true" data-type="subprocess">
+                        <div class="shape-preview shape-subprocess">ขั้นตอนย่อย<br><small>Sub-Process</small></div>
+                    </div>
+                    <div class="shape-item" draggable="true" data-type="text">
+                        <div class="shape-preview shape-text">ข้อความ<br><small>Text Label</small></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="shape-category">
+                <span class="category-title">ขอบเขต & แผนก (Swimlane / Dept)</span>
+                <div class="shape-grid">
+                    <div class="shape-item" draggable="true" data-type="swimlane">
+                        <div class="shape-preview shape-swimlane">ขอบเขตสายงาน (Swimlane)</div>
+                    </div>
+                    <div class="shape-item" draggable="true" data-type="department">
+                        <div class="shape-preview shape-department">บล็อกแผนก (Department)</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="help-tip">
+                    <i class="fa-solid fa-link"></i>
+                    <span>เลือกการ์ดปัญหาแล้วโยงสายหรือระบุกระบวนการที่มาของปัญหาได้ทันที!<br><small>(Select issue card to link to target process!)</small></span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Canvas Container -->
+        <main class="canvas-container" id="canvas-container">
+            <!-- Multi-Page & Department Bar -->
+            <div class="pages-bar">
+                <div class="pages-tabs" id="pages-tabs">
+                    <!-- Dynamic Page Tabs will be rendered here -->
+                </div>
+                <button id="btn-add-page" class="add-page-btn" title="เพิ่มหน้าใหม่ (Add Page)">
+                    <i class="fa-solid fa-plus"></i> เพิ่มหน้าย่อย (Add Page)
+                </button>
+                <div class="divider" style="height: 20px;"></div>
+                <!-- Custom Department Manager Trigger -->
+                <button id="btn-manage-depts" class="add-dept-btn" title="กำหนดและจัดการชั้นแผนกด้วยตัวเอง (Manage Custom Department Lanes)">
+                    <i class="fa-solid fa-sitemap"></i> จัดการแผนกแบบกำหนดเอง (Manage Depts)
+                </button>
+            </div>
+
+            <!-- SVG Render Area -->
+            <div class="canvas-viewport" id="canvas-viewport">
+                <svg id="flow-svg" width="5000" height="5000">
+                    <defs>
+                        <!-- Grid Pattern -->
+                        <pattern id="grid-pattern" width="20" height="20" patternUnits="userSpaceOnUse">
+                            <circle cx="2" cy="2" r="1.2" class="grid-dot" />
+                        </pattern>
+                        <!-- Arrowhead Marker for Connections -->
+                        <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                            <path d="M 0 0 L 10 5 L 0 10 z" class="arrow-head" />
+                        </marker>
+                        <!-- Selected Arrow Marker -->
+                        <marker id="arrow-selected" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                            <path d="M 0 0 L 10 5 L 0 10 z" class="arrow-head-selected" />
+                        </marker>
+                        <!-- Red Flag Link Arrow Marker -->
+                        <marker id="arrow-red" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                            <path d="M 0 0 L 10 5 L 0 10 z" fill="#ef4444" />
+                        </marker>
+                        <!-- Yellow Flag Link Arrow Marker -->
+                        <marker id="arrow-yellow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                            <path d="M 0 0 L 10 5 L 0 10 z" fill="#f59e0b" />
+                        </marker>
+                        <!-- Green Flag Link Arrow Marker -->
+                        <marker id="arrow-green" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                            <path d="M 0 0 L 10 5 L 0 10 z" fill="#10b981" />
+                        </marker>
+                    </defs>
+
+                    <!-- Background Grid -->
+                    <rect id="svg-grid" width="100%" height="100%" fill="url(#grid-pattern)" />
+                    
+                    <!-- Main Canvas Content Group (Handles Zoom/Pan) -->
+                    <g id="canvas-content">
+                        <!-- Group for Department Swimlanes Tiers -->
+                        <g id="group-dept-lanes"></g>
+                        <!-- Group for Swimlanes -->
+                        <g id="group-swimlanes"></g>
+                        <!-- Group for Connection Lines -->
+                        <g id="group-connections"></g>
+                        <!-- Group for Flow Nodes -->
+                        <g id="group-nodes"></g>
+                        <!-- Dynamic Connection Line Preview during dragging -->
+                        <path id="temp-connection" d="" class="temp-line" style="display:none;" />
+                        <!-- Snap Lines Guide -->
+                        <line id="snap-guide-h" class="snap-guide" style="display:none;" />
+                        <line id="snap-guide-v" class="snap-guide" style="display:none;" />
+                    </g>
+                </svg>
+            </div>
+
+            <!-- Floating Quick Toolbar -->
+            <div class="floating-toolbar" id="floating-toolbar">
+                <button id="tool-select" class="tool-btn active" title="เลือก / ย้าย (Select / Move - V)"><i class="fa-solid fa-arrow-pointer"></i></button>
+                <button id="tool-connect" class="tool-btn" title="โหมดโยงเส้น (Connect Mode - C)"><i class="fa-solid fa-link"></i></button>
+                <button id="tool-pan" class="tool-btn" title="เลื่อนมุมมอง (Pan Hand - H)"><i class="fa-solid fa-hand"></i></button>
+                <div class="tool-divider"></div>
+                <button id="btn-delete-selected" class="tool-btn danger" title="ลบรายการที่เลือก (Delete)"><i class="fa-solid fa-trash-can"></i></button>
+            </div>
+        </main>
+
+        <!-- Right Inspector / Property Panel -->
+        <aside class="inspector-panel" id="inspector-panel">
+            <div class="panel-header">
+                <h3><i class="fa-solid fa-sliders"></i> คุณสมบัติ (Properties)</h3>
+            </div>
+            
+            <!-- Default View when nothing selected -->
+            <div id="prop-empty" class="prop-section">
+                <p class="empty-msg"><i class="fa-solid fa-mouse-pointer"></i> คลิกกล่องข้อความเพื่อโยงเส้นหรือปรับแต่ง<br><small>(Select any shape to view properties)</small></p>
+            </div>
+
+            <!-- Node Inspector -->
+            <div id="prop-node" class="prop-section" style="display:none;">
+                <button id="btn-open-drawer" class="btn-drawer-trigger">
+                    <i class="fa-solid fa-up-right-and-down-left-from-center"></i> เปิดป๊อปอัพผังย่อยจอใหญ่ (Open Large Editable Modal)
+                </button>
+
+                <!-- ISSUE CARD TARGET LINKING SELECTOR -->
+                <div class="form-group highlight-box" id="issue-target-group" style="display:none; background: #fef2f2; border-color: #fca5a5;">
+                    <label style="color:#dc2626;"><i class="fa-solid fa-link"></i> ชี้ปัญหาไปยังกระบวนการ (Target Process)</label>
+                    <select id="issue-target-node-select">
+                        <option value="">-- ไม่ได้ชี้ระบุกระบวนการ (Unlinked) --</option>
+                    </select>
+                    <small style="color:#991b1b;">* เส้นประสีแดง/เขียวจะโยงชี้ไปหาแผ่นกระบวนการที่เกิดปัญหาอัตโนมัติ</small>
+                </div>
+
+                <div class="form-group">
+                    <label>ข้อความบรรยาย (Text Label)</label>
+                    <textarea id="node-text-input" rows="3" placeholder="ระบุข้อความ (Enter text)..."></textarea>
+                </div>
+
+                <!-- RESIZABLE WIDTH AND HEIGHT CONTROLS -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-arrows-left-right"></i> ความกว้าง (Width)</label>
+                        <input type="number" id="node-width-input" value="190" min="60" max="1000">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-arrows-up-down"></i> ความสูง (Height)</label>
+                        <input type="number" id="node-height-input" value="65" min="40" max="1000">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>ประเภทรูปทรง (Shape Type)</label>
+                    <select id="node-shape-select">
+                        <option value="process">กระบวนการ / Process (สี่เหลี่ยม)</option>
+                        <option value="startend">เริ่ม-จบ / Start-End (วงรีแคปซูล)</option>
+                        <option value="decision">เงื่อนไข / Decision (ขนมเปียกปูน)</option>
+                        <option value="inputoutput">รับ-แสดงผล / Input-Output (ด้านขนาน)</option>
+                        <option value="document">เอกสาร / Document</option>
+                        <option value="connector">จุดเชื่อม / Connector (วงกลม)</option>
+                        <option value="subprocess">ขั้นตอนย่อย / Sub-process</option>
+                        <option value="issue-red">🚩 การ์ดปัญหา Red Flag (วิกฤต)</option>
+                        <option value="issue-yellow">🚩 การ์ดปัญหา Yellow Flag (เฝ้าระวัง)</option>
+                        <option value="issue-green">🟩 การ์ดปัญหา Green Flag (ผ่าน)</option>
+                        <option value="swimlane">ขอบเขตสายงาน / Swimlane</option>
+                        <option value="department">บล็อกแผนก / Department Block</option>
+                    </select>
+                </div>
+
+                <!-- Advanced Feature: Drill-down / Department Link -->
+                <div class="form-group highlight-box">
+                    <label><i class="fa-solid fa-up-right-from-square"></i> คลิกทะลุไปหน้าย่อย (Sub-Page Link)</label>
+                    <select id="node-link-page-select">
+                        <option value="">-- ไม่ได้เชื่อมโยง (None) --</option>
+                    </select>
+                </div>
+
+                <!-- QUICK COLOR PALETTE SWATCHES -->
+                <div class="form-group">
+                    <label><i class="fa-solid fa-palette"></i> เลือกสีสำเร็จรูป (Click Color Swatch):</label>
+                    <div class="color-swatch-grid" id="node-color-swatches">
+                        <button class="color-swatch-btn" data-bg="#ffffff" data-border="#4f46e5" data-text="#0f172a" style="background:#ffffff; border-color:#cbd5e1;" title="ขาว (White)"></button>
+                        <button class="color-swatch-btn" data-bg="#38bdf8" data-border="#0284c7" data-text="#0f172a" style="background:#38bdf8;" title="ฟ้า Sales (Cyan)"></button>
+                        <button class="color-swatch-btn" data-bg="#e879f9" data-border="#c026d3" data-text="#0f172a" style="background:#e879f9;" title="ชมพู Purchasing (Magenta)"></button>
+                        <button class="color-swatch-btn" data-bg="#facc15" data-border="#ca8a04" data-text="#0f172a" style="background:#facc15;" title="เหลือง Warehouse (Yellow)"></button>
+                        <button class="color-swatch-btn" data-bg="#f87171" data-border="#dc2626" data-text="#ffffff" style="background:#f87171;" title="แดง Transport (Red)"></button>
+                        <button class="color-swatch-btn" data-bg="#fb923c" data-border="#c2410c" data-text="#0f172a" style="background:#fb923c;" title="ส้ม Accounting (Orange)"></button>
+                        <button class="color-swatch-btn" data-bg="#34d399" data-border="#059669" data-text="#0f172a" style="background:#34d399;" title="เขียวมินต์ (Mint)"></button>
+                        <button class="color-swatch-btn" data-bg="#c084fc" data-border="#9333ea" data-text="#0f172a" style="background:#c084fc;" title="ม่วง (Purple)"></button>
+                        <button class="color-swatch-btn" data-bg="#a5f3fc" data-border="#0891b2" data-text="#0e7490" style="background:#a5f3fc;" title="ฟ้าอ่อน (Light Cyan)"></button>
+                        <button class="color-swatch-btn" data-bg="#0f172a" data-border="#334155" data-text="#ffffff" style="background:#0f172a;" title="ดำ (Dark Slate)"></button>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>สีพื้นหลัง (Background)</label>
+                        <input type="color" id="node-bg-color" value="#ffffff">
+                    </div>
+                    <div class="form-group">
+                        <label>สีเส้นขอบ (Border)</label>
+                        <input type="color" id="node-border-color" value="#4f46e5">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>สีตัวอักษร (Text Color)</label>
+                        <input type="color" id="node-text-color" value="#0f172a">
+                    </div>
+                    <div class="form-group">
+                        <label>ขนาดอักษร (Font Size)</label>
+                        <input type="number" id="node-font-size" value="13" min="10" max="36">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Connection Inspector -->
+            <div id="prop-connection" class="prop-section" style="display:none;">
+                <div class="form-group">
+                    <label>ข้อความบนเส้น (Line Label)</label>
+                    <input type="text" id="conn-text-input" placeholder="เช่น ใช่ / ไม่ใช่ (e.g. Yes / No)">
+                </div>
+                <div class="form-group">
+                    <label>รูปแบบเส้น (Line Style)</label>
+                    <select id="conn-style-select">
+                        <option value="orthogonal">เส้นตั้งฉาก (Orthogonal)</option>
+                        <option value="bezier">เส้นโค้ง (Curved Bezier)</option>
+                        <option value="straight">เส้นตรง (Straight Line)</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>สีเส้น (Line Color)</label>
+                        <input type="color" id="conn-color" value="#475569">
+                    </div>
+                    <div class="form-group">
+                        <label>ความหนาเส้น (Line Width)</label>
+                        <input type="number" id="conn-width" value="2" min="1" max="10">
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- ULTRA-LARGE EDITABLE SUB-FLOWCHART MODAL WITH ISSUE FLAGS -->
+    <div id="subflow-modal" class="modal-backdrop" style="display:none;">
+        <div class="large-modal-card ultra-large-modal">
+            <!-- Modal Header -->
+            <div class="large-modal-header">
+                <div class="modal-title-box">
+                    <i class="fa-solid fa-diagram-project" style="color: #4f46e5; font-size: 1.5rem;"></i>
+                    <div class="modal-title-text">
+                        <span class="modal-subtitle">🔍 ผังกระบวนการย่อยภายใน (ลากขยับรูปทรง & แปะป้าย Red/Green Flag ปัญหาได้ทันที)</span>
+                        <h2 id="modal-node-title">เริ่มต้น: รับออเดอร์ลูกค้า</h2>
+                    </div>
+                </div>
+                <button id="btn-close-subflow-modal" class="icon-btn-lg" title="ปิดหน้าต่าง (Close)"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <!-- Modal Body: 3 Columns Layout -->
+            <div class="modal-3col-body ultra-body">
+                <!-- Column 1 (LEFT): Original Clicked Box -->
+                <div class="col-left">
+                    <div class="col-card highlight-left-card">
+                        <div class="card-badge left-badge"><i class="fa-solid fa-box"></i> กล่องข้อความเดิมที่กด</div>
+                        <div id="modal-left-shape-preview" class="original-box-preview">
+                            <!-- Render SVG preview of clicked box -->
+                        </div>
+                        <div class="form-group" style="margin-top: 12px;">
+                            <label><i class="fa-solid fa-font"></i> ข้อความในกล่อง (Box Text)</label>
+                            <textarea id="modal-left-text" rows="3"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-circle-info"></i> หลักการทำงาน (Principle)</label>
+                            <textarea id="modal-desc" rows="5" placeholder="ระบุคำอธิบายหลักการทำงานของกล่องนี้..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Column 2 (CENTER): Fully Editable & Draggable Sub-Flowchart Diagram -->
+                <div class="col-center">
+                    <div class="col-card subflow-center-card">
+                        <div class="subflow-toolbar-editable">
+                            <div class="subflow-toolbar-title">
+                                <i class="fa-solid fa-arrows-up-down-left-right"></i> ลากย้ายรูปทรงย่อยอิสระ & ปรับสี/ชนิดรูปทรงย่อย
+                            </div>
+                            <div class="subflow-quick-actions">
+                                <button id="btn-add-subnode-process" class="btn-subtool-sm" title="เพิ่มขั้นตอนย่อย (Process)">
+                                    <i class="fa-solid fa-plus"></i> เพิ่มขั้นตอน
+                                </button>
+                                <button id="btn-add-subnode-decision" class="btn-subtool-sm warning" title="เพิ่มเงื่อนไขย่อย (Decision)">
+                                    <i class="fa-solid fa-code-branch"></i> เพิ่มเงื่อนไข
+                                </button>
+                                <button id="btn-add-subnode-issue-red" class="btn-subtool-sm danger" title="แปะการ์ดปัญหา Red Flag บนผังย่อย">
+                                    <i class="fa-solid fa-flag"></i> 🚩 แปะปัญหา (Red Flag)
+                                </button>
+                                <button id="btn-del-subnode" class="btn-subtool-sm danger" title="ลบกล่องย่อยที่เลือก">
+                                    <i class="fa-solid fa-trash-can"></i> ลบที่เลือก
+                                </button>
+                                <button id="btn-modal-jump-page" class="btn-primary-sm">
+                                    <i class="fa-solid fa-up-right-from-square"></i> หน้าแก้ไขเต็ม
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Ultra-Large Interactive SVG Canvas for Sub-Flowchart -->
+                        <div class="large-svg-container ultra-svg-container">
+                            <svg id="large-subflow-svg" viewBox="0 0 780 420" width="100%" height="420">
+                                <!-- Dynamic Sub-Flowchart SVG rendered here -->
+                            </svg>
+                        </div>
+
+                        <!-- SUB-NODE COLOR & SHAPE CUSTOMIZER BAR -->
+                        <div id="subnode-customizer-bar" class="subnode-customizer-bar">
+                            <div class="subnode-customizer-title">
+                                <i class="fa-solid fa-palette"></i> ปรับสี & รูปทรงย่อยที่เลือก:
+                            </div>
+                            <div class="subnode-customizer-inputs">
+                                <div class="subnode-input-group">
+                                    <label>ประเภทรูปทรง</label>
+                                    <select id="subnode-shape-select">
+                                        <option value="process">กระบวนการ (Process)</option>
+                                        <option value="startend">เริ่ม-จบ (Start/End)</option>
+                                        <option value="decision">เงื่อนไข (Decision)</option>
+                                        <option value="inputoutput">รับ-แสดงผล (Input/Output)</option>
+                                        <option value="document">เอกสาร (Document)</option>
+                                        <option value="issue-red">🚩 การ์ดปัญหา Red Flag</option>
+                                        <option value="issue-green">🟩 การ์ดปัญหา Green Flag</option>
+                                    </select>
+                                </div>
+                                <div class="subnode-input-group">
+                                    <label>สีพื้นหลัง</label>
+                                    <input type="color" id="subnode-bg-color" value="#ffffff">
+                                </div>
+                                <div class="subnode-input-group">
+                                    <label>สีเส้นขอบ</label>
+                                    <input type="color" id="subnode-border-color" value="#4f46e5">
+                                </div>
+                                <div class="subnode-input-group" style="flex: 1;">
+                                    <label>ข้อความย่อย</label>
+                                    <input type="text" id="subnode-text-input" placeholder="พิมพ์ข้อความย่อย...">
+                                </div>
+                                <button id="btn-subnode-nest-flow" class="btn-primary-sm" style="align-self: flex-end; background: linear-gradient(135deg, #0ea5e9, #6366f1);" title="สร้างและเจาะลึกผังย่อยลึกลงไปอีกขั้น (Nested Sub-Flowchart)">
+                                    <i class="fa-solid fa-folder-tree"></i> 🔍 ทำผังย่อยซ้อนย่อย (Sub-Flow)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Column 3 (RIGHT): Issue & Flag Management Panel + Owner & Docs -->
+                <div class="col-right">
+                    <div class="col-card highlight-right-card">
+                        <div class="card-badge right-badge"><i class="fa-solid fa-flag"></i> ติดตามปัญหาประจำกล่อง (Red/Green Flag)</div>
+                        
+                        <!-- Issue Creation Form -->
+                        <div class="issue-input-box">
+                            <div class="flag-selector-group">
+                                <label><i class="fa-solid fa-flag"></i> เลือกระดับปัญหา (Flag Status):</label>
+                                <div class="flag-radio-buttons">
+                                    <label class="flag-radio red-flag active">
+                                        <input type="radio" name="modal-flag" value="red" checked> 🚩 Red Flag (วิกฤต/คอขวด)
+                                    </label>
+                                    <label class="flag-radio yellow-flag">
+                                        <input type="radio" name="modal-flag" value="yellow"> 🚩 Yellow Flag (เฝ้าระวัง)
+                                    </label>
+                                    <label class="flag-radio green-flag">
+                                        <input type="radio" name="modal-flag" value="green"> 🟩 Green Flag (ผ่าน/เรียบร้อย)
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="form-group" style="margin-top: 8px;">
+                                <input type="text" id="modal-issue-input" placeholder="ระบุปัญหาที่พบในขั้นตอนนี้นำไปแปะบนผัง...">
+                            </div>
+                            <button id="btn-add-issue" class="btn-primary-sm" style="width: 100%; justify-content: center;">
+                                <i class="fa-solid fa-plus-circle"></i> ➕ แปะปัญหาในขั้นตอนนี้นำไปแสดงผล
+                            </button>
+                        </div>
+
+                        <!-- Active Issues List on Node -->
+                        <div class="form-group" style="margin-top: 10px; flex: 1; display: flex; flex-direction: column;">
+                            <label><i class="fa-solid fa-list-ul"></i> รายการปัญหาที่แปะไว้ในกล่องนี้:</label>
+                            <div id="modal-issue-list" class="modal-issue-list">
+                                <!-- Dynamic Issue Cards Rendered Here -->
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-top: 10px;">
+                            <label><i class="fa-solid fa-user-gear"></i> ผู้รับผิดชอบ (Responsible Owner)</label>
+                            <input type="text" id="modal-owner" placeholder="เช่น แผนกขาย / System Admin">
+                        </div>
+
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-list-check"></i> ขั้นตอนการปฏิบัติงาน (Operation Steps)</label>
+                            <textarea id="modal-steps" rows="3" placeholder="1. รับเรื่อง&#10;2. ตรวจสอบข้อมูล"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="large-modal-footer">
+                <button id="btn-save-subflow-modal" class="btn-primary-block" style="max-width: 360px;">
+                    <i class="fa-solid fa-check"></i> บันทึกข้อมูลผังย่อยและปิดป๊อปอัพ
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ISSUE DASHBOARD REPORT MODAL (ตารางสรุปรวมปัญหาประจํากระบวนการ) -->
+    <div id="issue-dashboard-modal" class="modal-backdrop" style="display:none;">
+        <div class="modal-card issue-dashboard-card">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-flag" style="color: #ef4444;"></i> 📊 รายงานสรุปรวมรายการปัญหาในผังงานทั้งหมด (Issue Summary Dashboard)</h3>
+                <button id="btn-close-issue-dashboard" class="icon-btn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body" style="padding: 16px;">
+                <!-- Summary Metrics Bar -->
+                <div class="issue-metrics-bar">
+                    <div class="metric-card metric-red">
+                        <span class="metric-num" id="metric-red-count">0</span>
+                        <span class="metric-label">🚩 Red Flag (วิกฤต/คอขวด)</span>
+                    </div>
+                    <div class="metric-card metric-yellow">
+                        <span class="metric-num" id="metric-yellow-count">0</span>
+                        <span class="metric-label">🚩 Yellow Flag (เฝ้าระวัง)</span>
+                    </div>
+                    <div class="metric-card metric-green">
+                        <span class="metric-num" id="metric-green-count">0</span>
+                        <span class="metric-label">🟩 Green Flag (แก้ไขแล้ว/ผ่าน)</span>
+                    </div>
+                    <div class="metric-card metric-total">
+                        <span class="metric-num" id="metric-total-count">0</span>
+                        <span class="metric-label">📋 ปัญหารวมทั้งหมด</span>
+                    </div>
+                </div>
+
+                <!-- Table of Issues Grouped by Process -->
+                <div class="issue-table-container">
+                    <table class="issue-report-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>สถานะ Flag</th>
+                                <th>กระบวนการ / ตำแหน่งบนผัง</th>
+                                <th>ผู้รับผิดชอบ</th>
+                                <th>รายละเอียดปัญหาที่พบ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="issue-table-body">
+                            <!-- Dynamic Table Rows Rendered Here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 0.8rem; color: var(--text-muted);">* ข้อมูลดึงรวมจากทุกการ์ดปัญหาที่ลากวางบนผังงานและในกระบวนการย่อยอัตโนมัติ</span>
+                <button id="btn-export-issues-csv" class="btn-primary-sm"><i class="fa-solid fa-file-csv"></i> ส่งออกตารางปัญหา (Export CSV)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Department Manager Modal -->
+    <div id="dept-modal" class="modal-backdrop" style="display:none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-sitemap"></i> จัดการรายชื่อแผนกแบบกำหนดเอง (Custom Departments)</h3>
+                <button id="btn-close-dept-modal" class="icon-btn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-tip">เพิ่ม แก้ไข เลื่อนลำดับ หรือลบแผนกที่ต้องการใช้ในผังกระบวนการนี้ได้ด้วยตนเอง:</p>
+                
+                <div class="add-dept-form">
+                    <input type="text" id="new-dept-name-input" placeholder="ระบุชื่อแผนกใหม่ (เช่น แผนกการตลาด / Marketing)...">
+                    <button id="btn-submit-new-dept" class="btn-primary-sm"><i class="fa-solid fa-plus"></i> เพิ่มแผนก</button>
+                </div>
+
+                <div id="dept-list-container" class="dept-list-container"></div>
+            </div>
+            <div class="modal-footer">
+                <button id="btn-save-dept-modal" class="btn-primary-block"><i class="fa-solid fa-check"></i> ยืนยันและปรับปรุงผังงาน</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inline Text Editor Popup -->
+    <div id="text-editor-popup" class="text-editor-popup" style="display:none;">
+        <textarea id="inline-text-textarea"></textarea>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
