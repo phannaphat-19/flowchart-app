@@ -1549,14 +1549,12 @@
         const modalSharedSelect = getElem('modal-shared-flow-select');
         if (modalSharedSelect) {
             modalSharedSelect.addEventListener('change', () => {
-                if (state.selectedItem?.type === 'node') {
-                    const node = getCurrentPage().nodes.find(n => n.id === state.selectedItem.id);
-                    if (node) {
-                        node.linkTargetNodeId = modalSharedSelect.value;
-                        openSubflowModal(node, false);
-                        renderCanvas();
-                        saveHistoryState();
-                    }
+                const node = subflowModalStack[0];
+                if (node) {
+                    node.linkTargetNodeId = modalSharedSelect.value;
+                    openSubflowModal(node, false);
+                    renderCanvas();
+                    saveHistoryState();
                 }
             });
         }
@@ -1628,15 +1626,13 @@
 
         if (modalLeftText) {
             modalLeftText.addEventListener('input', () => {
-                if (state.selectedItem?.type === 'node') {
-                    const node = getCurrentPage().nodes.find(n => n.id === state.selectedItem.id);
-                    if (node) {
-                        node.text = modalLeftText.value;
-                        const titleElem = getElem('modal-node-title');
-                        if (titleElem) titleElem.textContent = node.text.replace(/\n/g, ' ') || 'กล่องกระบวนการ';
-                        renderOriginalBoxPreview(node);
-                        renderCanvas();
-                    }
+                const node = subflowModalStack[0];
+                if (node) {
+                    node.text = modalLeftText.value;
+                    const titleElem = getElem('modal-node-title');
+                    if (titleElem) titleElem.textContent = node.text.replace(/\n/g, ' ') || 'กล่องกระบวนการ';
+                    renderOriginalBoxPreview(node);
+                    renderCanvas();
                 }
             });
         }
@@ -1797,24 +1793,23 @@
 
         if (btnSave) {
             btnSave.addEventListener('click', () => {
-                if (state.selectedItem?.type === 'node') {
-                    const node = getCurrentPage().nodes.find(n => n.id === state.selectedItem.id);
-                    if (node) {
-                        const modalLeftText = getElem('modal-left-text');
-                        const modalDesc = getElem('modal-desc');
-                        const modalSteps = getElem('modal-steps');
-                        const modalOwner = getElem('modal-owner');
-
-                        if (modalLeftText) node.text = modalLeftText.value;
-                        if (modalDesc) node.details.desc = modalDesc.value.trim();
-                        if (modalSteps) node.details.steps = modalSteps.value.trim();
-                        if (modalOwner) node.details.owner = modalOwner.value.trim();
-
-                        closeSubflowModal();
-                        renderCanvas();
-                        saveHistoryState();
-                    }
+                const rootNode = subflowModalStack[0];
+                if (rootNode) {
+                    const modalLeftText = getElem('modal-left-text');
+                    if (modalLeftText) rootNode.text = modalLeftText.value;
                 }
+                if (activeSubflowCurrentNode) {
+                    const modalDesc = getElem('modal-desc');
+                    const modalSteps = getElem('modal-steps');
+                    const modalOwner = getElem('modal-owner');
+
+                    if (modalDesc) activeSubflowCurrentNode.details.desc = modalDesc.value.trim();
+                    if (modalSteps) activeSubflowCurrentNode.details.steps = modalSteps.value.trim();
+                    if (modalOwner) activeSubflowCurrentNode.details.owner = modalOwner.value.trim();
+                }
+                closeSubflowModal();
+                renderCanvas();
+                saveHistoryState();
             });
         }
 
