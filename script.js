@@ -1114,34 +1114,6 @@
                 });
                 svg.appendChild(pathNo);
 
-                // Quick Delete ✕ Badge
-                const delCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-                delCircle.setAttribute('cx', midX); delCircle.setAttribute('cy', midY);
-                delCircle.setAttribute('r', '9'); delCircle.setAttribute('fill', '#fee2e2');
-                delCircle.setAttribute('stroke', '#ef4444'); delCircle.setAttribute('stroke-width', '1.5');
-                delCircle.style.cursor = 'pointer';
-                delCircle.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    node.details.subConns.splice(connIdx, 1);
-                    selectedSubConnIdx = -1;
-                    renderLargeSubFlowchartSVG(node);
-                });
-                svg.appendChild(delCircle);
-
-                const delTxt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                delTxt.setAttribute('x', midX); delTxt.setAttribute('y', midY);
-                delTxt.setAttribute('font-size', '9px'); delTxt.setAttribute('fill', '#ef4444');
-                delTxt.setAttribute('font-weight', 'bold'); delTxt.setAttribute('text-anchor', 'middle');
-                delTxt.setAttribute('dominant-baseline', 'central'); delTxt.style.cursor = 'pointer';
-                delTxt.textContent = '✕';
-                delTxt.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    node.details.subConns.splice(connIdx, 1);
-                    selectedSubConnIdx = -1;
-                    renderLargeSubFlowchartSVG(node);
-                });
-                svg.appendChild(delTxt);
-
                 if (conn.text) {
                     const txtNo = document.createElementNS('http://www.w3.org/2000/svg', 'text');
                     txtNo.setAttribute('x', (fromSN.x + toSN.x) / 2); txtNo.setAttribute('y', fromSN.y + fromSN.h + 24);
@@ -1156,10 +1128,7 @@
                 const x2 = isVert ? toSN.x + toSN.w/2 : toSN.x;
                 const y2 = isVert ? toSN.y : toSN.y + toSN.h/2;
 
-                const midX = (x1 + x2) / 2;
-                const midY = (y1 + y2) / 2;
-
-                // Thick invisible hit-box line
+                // Thick invisible hit-box line for easy clicking/selecting
                 const hitLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
                 hitLine.setAttribute('x1', x1); hitLine.setAttribute('y1', y1);
                 hitLine.setAttribute('x2', x2); hitLine.setAttribute('y2', y2);
@@ -1188,34 +1157,6 @@
                     renderLargeSubFlowchartSVG(node);
                 });
                 svg.appendChild(line);
-
-                // Quick Delete ✕ Badge
-                const delCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-                delCircle.setAttribute('cx', midX); delCircle.setAttribute('cy', midY);
-                delCircle.setAttribute('r', '9'); delCircle.setAttribute('fill', '#fee2e2');
-                delCircle.setAttribute('stroke', '#ef4444'); delCircle.setAttribute('stroke-width', '1.5');
-                delCircle.style.cursor = 'pointer';
-                delCircle.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    node.details.subConns.splice(connIdx, 1);
-                    selectedSubConnIdx = -1;
-                    renderLargeSubFlowchartSVG(node);
-                });
-                svg.appendChild(delCircle);
-
-                const delTxt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                delTxt.setAttribute('x', midX); delTxt.setAttribute('y', midY);
-                delTxt.setAttribute('font-size', '9px'); delTxt.setAttribute('fill', '#ef4444');
-                delTxt.setAttribute('font-weight', 'bold'); delTxt.setAttribute('text-anchor', 'middle');
-                delTxt.setAttribute('dominant-baseline', 'central'); delTxt.style.cursor = 'pointer';
-                delTxt.textContent = '✕';
-                delTxt.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    node.details.subConns.splice(connIdx, 1);
-                    selectedSubConnIdx = -1;
-                    renderLargeSubFlowchartSVG(node);
-                });
-                svg.appendChild(delTxt);
 
                 if (conn.text) {
                     const txtYes = document.createElementNS('http://www.w3.org/2000/svg', 'text');
