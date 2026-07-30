@@ -973,10 +973,15 @@
         }
     }
 
+    let subConnectMode = false;   // true = รอคลิกจากกล่อง → กล่อง
+    let subConnFromId = null;      // id ของกล่องต้นทาง
+    let selectedSubConnIdx = -1;   // index ของเส้นที่เลือกอยู่
+
     function renderLargeSubFlowchartSVG(node) {
         const svg = getElem('large-subflow-svg');
         if (!svg) return;
         svg.innerHTML = '';
+
 
         if (!node.details.subNodes || !Array.isArray(node.details.subNodes)) {
             const rawSteps = node.details?.steps ? node.details.steps.split('\n').filter(s => s.trim()) : [];
@@ -1010,19 +1015,28 @@
         svg.appendChild(defs);
 
         // Render Connections
-        (node.details.subConns || []).forEach(conn => {
+        (node.details.subConns || []).forEach((conn, connIdx) => {
             const fromSN = node.details.subNodes.find(sn => sn.id === conn.from);
             const toSN = node.details.subNodes.find(sn => sn.id === conn.to);
             if (!fromSN || !toSN) return;
+
+            const isConnSel = selectedSubConnIdx === connIdx;
 
             if (conn.isLoopback) {
                 const pathNo = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                 pathNo.setAttribute('d', `M ${fromSN.x + fromSN.w/2},${fromSN.y + fromSN.h} L ${fromSN.x + fromSN.w/2},${fromSN.y + fromSN.h + 40} L ${toSN.x + toSN.w/2},${fromSN.y + fromSN.h + 40} L ${toSN.x + toSN.w/2},${toSN.y + toSN.h}`);
                 pathNo.setAttribute('fill', 'none');
-                pathNo.setAttribute('stroke', '#ef4444');
-                pathNo.setAttribute('stroke-width', '2');
+                pathNo.setAttribute('stroke', isConnSel ? '#06b6d4' : '#ef4444');
+                pathNo.setAttribute('stroke-width', isConnSel ? '3.5' : '2');
                 pathNo.setAttribute('stroke-dasharray', '5,4');
                 pathNo.setAttribute('marker-end', 'url(#large-sub-arrow)');
+                pathNo.style.cursor = 'pointer';
+                pathNo.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    selectedSubConnIdx = connIdx;
+                    selectedSubNodeId = null;
+                    renderLargeSubFlowchartSVG(node);
+                });
                 svg.appendChild(pathNo);
 
                 if (conn.text) {
@@ -1042,9 +1056,16 @@
 
                 line.setAttribute('x1', x1); line.setAttribute('y1', y1);
                 line.setAttribute('x2', x2); line.setAttribute('y2', y2);
-                line.setAttribute('stroke', '#4f46e5');
-                line.setAttribute('stroke-width', '2');
+                line.setAttribute('stroke', isConnSel ? '#06b6d4' : '#4f46e5');
+                line.setAttribute('stroke-width', isConnSel ? '3.5' : '2');
                 line.setAttribute('marker-end', 'url(#large-sub-arrow)');
+                line.style.cursor = 'pointer';
+                line.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    selectedSubConnIdx = connIdx;
+                    selectedSubNodeId = null;
+                    renderLargeSubFlowchartSVG(node);
+                });
                 svg.appendChild(line);
 
                 if (conn.text) {
@@ -1148,10 +1169,61 @@
             txt.textContent = sn.text || 'ขั้นตอนย่อย';
             g.appendChild(txt);
 
+            // Highlight if this node is selected as connection source
+            if (subConnFromId === sn.id) {
+                if (shape.tagName === 'rect' || shape.tagName === 'polygon' || shape.tagName === 'path') {
+                    shape.setAttribute('stroke', '#06b6d4');
+                    shape.setAttribute('stroke-width', '3.5');
+                }
+            }
+
+            // Render Anchor Ports for connecting
+            const anchorCoords = [
+                { x: sn.w / 2, y: 0 },
+                { x: sn.w, y: sn.h / 2 },
+                { x: sn.w / 2, y: sn.h },
+                { x: 0, y: sn.h / 2 }
+            ];
+            anchorCoords.forEach(pt => {
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', pt.x);
+                circle.setAttribute('cy', pt.y);
+                circle.setAttribute('r', subConnectMode ? '5' : '3.5');
+                circle.setAttribute('fill', subConnFromId === sn.id ? '#06b6d4' : '#4f46e5');
+                circle.setAttribute('stroke', '#ffffff');
+                circle.setAttribute('stroke-width', '1.5');
+                circle.style.opacity = subConnectMode ? '1' : '0.4';
+                circle.style.cursor = 'pointer';
+                g.appendChild(circle);
+            });
+
             // Sub-Node Mouse Dragging Engine & Selection & Double-Click Nested Flow
             g.addEventListener('mousedown', (e) => {
                 e.stopPropagation();
+
+                // If in Connect Mode
+                if (subConnectMode) {
+                    if (!subConnFromId) {
+                        subConnFromId = sn.id;
+                        selectedSubConnIdx = -1;
+                        renderLargeSubFlowchartSVG(node);
+                    } else if (subConnFromId !== sn.id) {
+                        if (!node.details.subConns) node.details.subConns = [];
+                        node.details.subConns.push({ from: subConnFromId, to: sn.id, text: '' });
+                        subConnFromId = null;
+                        subConnectMode = false;
+                        const btnConnect = getElem('btn-connect-subnode');
+                        if (btnConnect) {
+                            btnConnect.style.background = '';
+                            btnConnect.style.color = '#0284c7';
+                        }
+                        renderLargeSubFlowchartSVG(node);
+                    }
+                    return;
+                }
+
                 selectedSubNodeId = sn.id;
+                selectedSubConnIdx = -1;
                 renderSubNodeCustomizer(node, sn);
 
                 let isSubDragging = true;
@@ -1164,7 +1236,6 @@
                     if (!isSubDragging) return;
                     const dx = moveEvent.clientX - startClientX;
                     const dy = moveEvent.clientY - startClientY;
-
                     sn.x = Math.max(5, Math.min(640, origX + dx));
                     sn.y = Math.max(5, Math.min(340, origY + dy));
 
@@ -1239,6 +1310,8 @@
         const btnAddProc = getElem('btn-add-subnode-process');
         const btnAddDec = getElem('btn-add-subnode-decision');
         const btnAddIssueRed = getElem('btn-add-subnode-issue-red');
+        const btnConnectSub = getElem('btn-connect-subnode');
+        const btnDelConn = getElem('btn-del-subconn');
         const btnDelSub = getElem('btn-del-subnode');
         const btnSave = getElem('btn-save-subflow-modal');
         const btnJumpPage = getElem('btn-modal-jump-page');
@@ -1278,7 +1351,7 @@
                         const newId = `sub-${Date.now()}`;
                         const count = node.details.subNodes.length + 1;
                         const prevNode = node.details.subNodes[node.details.subNodes.length - 1];
-                        const newX = prevNode ? prevNode.x + 160 : 200;
+                        const newX = prevNode ? Math.min(600, prevNode.x + 160) : 200;
 
                         const newSubNode = {
                             id: newId,
@@ -1293,6 +1366,7 @@
                         };
                         node.details.subNodes.push(newSubNode);
                         if (prevNode) {
+                            if (!node.details.subConns) node.details.subConns = [];
                             node.details.subConns.push({ from: prevNode.id, to: newId, text: '' });
                         }
                         selectedSubNodeId = newId;
@@ -1309,7 +1383,7 @@
                     if (node && node.details?.subNodes) {
                         const newId = `sub-${Date.now()}`;
                         const prevNode = node.details.subNodes[node.details.subNodes.length - 1];
-                        const newX = prevNode ? prevNode.x + 160 : 350;
+                        const newX = prevNode ? Math.min(600, prevNode.x + 160) : 350;
 
                         const newSubNode = {
                             id: newId,
@@ -1324,6 +1398,7 @@
                         };
                         node.details.subNodes.push(newSubNode);
                         if (prevNode) {
+                            if (!node.details.subConns) node.details.subConns = [];
                             node.details.subConns.push({ from: prevNode.id, to: newId, text: '' });
                         }
                         selectedSubNodeId = newId;
@@ -1356,108 +1431,6 @@
                             selectedSubNodeId = newId;
                             renderLargeSubFlowchartSVG(node);
                         }
-                    }
-                }
-            });
-
-            btnOpenDrawer.addEventListener('click', (e) => {
-                e.preventDefault();
-                if (state.selectedItem?.type === 'node') {
-                    const node = getCurrentPage().nodes.find(n => n.id === state.selectedItem.id);
-                    if (node) openSubflowModal(node);
-                }
-            });
-        }
-
-        if (btnClose) btnClose.addEventListener('click', closeSubflowModal);
-
-        if (modalLeftText) {
-            modalLeftText.addEventListener('input', () => {
-                if (state.selectedItem?.type === 'node') {
-                    const node = getCurrentPage().nodes.find(n => n.id === state.selectedItem.id);
-                    if (node) {
-                        node.text = modalLeftText.value;
-                        const titleElem = getElem('modal-node-title');
-                        if (titleElem) titleElem.textContent = node.text.replace(/\n/g, ' ') || 'กล่องกระบวนการ';
-                        renderOriginalBoxPreview(node);
-                        renderCanvas();
-                    }
-                }
-            });
-        }
-
-        if (btnAddProc) {
-            btnAddProc.addEventListener('click', () => {
-                if (state.selectedItem?.type === 'node') {
-                    const node = getCurrentPage().nodes.find(n => n.id === state.selectedItem.id);
-                    if (node && node.details?.subNodes) {
-                        const newId = `sub-${Date.now()}`;
-                        const count = node.details.subNodes.length + 1;
-                        const prevNode = node.details.subNodes[node.details.subNodes.length - 1];
-                        const newX = prevNode ? prevNode.x + 160 : 200;
-
-                        const newSubNode = {
-                            id: newId,
-                            type: 'process',
-                            text: `ขั้นตอนย่อยที่ ${count}`,
-                            x: newX,
-                            y: 48,
-                            w: 150,
-                            h: 52,
-                            bg: '#eef2ff',
-                            border: '#4f46e5'
-                        };
-                        node.details.subNodes.push(newSubNode);
-                        if (prevNode) {
-                            node.details.subConns.push({ from: prevNode.id, to: newId, text: '' });
-                        }
-                        selectedSubNodeId = newId;
-                        renderLargeSubFlowchartSVG(node);
-                    }
-                }
-            });
-        }
-
-        if (btnAddDec) {
-            btnAddDec.addEventListener('click', () => {
-                if (state.selectedItem?.type === 'node') {
-                    const node = getCurrentPage().nodes.find(n => n.id === state.selectedItem.id);
-                    if (node && node.details?.subNodes) {
-                        const newId = `sub-${Date.now()}`;
-                        const prevNode = node.details.subNodes[node.details.subNodes.length - 1];
-                        const newX = prevNode ? prevNode.x + 160 : 350;
-
-                        const newSubNode = {
-                            id: newId,
-                            type: 'decision',
-                            text: 'ตรวจสอบเงื่อนไข?',
-                            x: newX,
-                            y: 40,
-                            w: 140,
-                            h: 70,
-                            bg: '#fffbeb',
-                            border: '#f59e0b'
-                        };
-                        node.details.subNodes.push(newSubNode);
-                        if (prevNode) {
-                            node.details.subConns.push({ from: prevNode.id, to: newId, text: '' });
-                        }
-                        selectedSubNodeId = newId;
-                        renderLargeSubFlowchartSVG(node);
-                    }
-                }
-            });
-        }
-
-        if (btnDelSub) {
-            btnDelSub.addEventListener('click', () => {
-                if (state.selectedItem?.type === 'node' && selectedSubNodeId) {
-                    const node = getCurrentPage().nodes.find(n => n.id === state.selectedItem.id);
-                    if (node && node.details?.subNodes) {
-                        node.details.subNodes = node.details.subNodes.filter(sn => sn.id !== selectedSubNodeId);
-                        node.details.subConns = node.details.subConns.filter(sc => sc.from !== selectedSubNodeId && sc.to !== selectedSubNodeId);
-                        selectedSubNodeId = null;
-                        renderLargeSubFlowchartSVG(node);
                     }
                 }
             });
