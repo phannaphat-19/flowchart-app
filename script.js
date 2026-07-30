@@ -1425,39 +1425,7 @@
 
     function drillDownSubNodeToNestedFlow(parentNode, subNode) {
         if (!subNode || subNode.type.startsWith('issue-')) return;
-
-        if (!subNode.linkPageId) {
-            const subPageName = `ผังย่อย: ${subNode.text ? subNode.text.substring(0, 15) : 'ขั้นตอนย่อย'}`;
-            const newPage = {
-                id: `page-${Date.now()}`,
-                name: subPageName,
-                departments: [
-                    { id: `d1-${Date.now()}`, name: 'ขั้นตอนการดำเนินงาน (Execution)', height: 180 },
-                    { id: `d2-${Date.now()}`, name: 'ขั้นตอนตรวจสอบ (Inspection)', height: 180 }
-                ],
-                nodes: [
-                    { id: `ns1-${Date.now()}`, type: 'startend', text: `เริ่ม: ${subNode.text || 'ขั้นตอนย่อย'}`, x: 100, y: 60, width: 220, height: 55, bgColor: '#ecfeff', borderColor: '#06b6d4', textColor: '#0e7490', fontSize: 13 },
-                    { id: `ns2-${Date.now()}`, type: 'process', text: 'ดำเนินการตรวจสอบความถูกต้อง', x: 360, y: 60, width: 220, height: 60, bgColor: '#ffffff', borderColor: '#4f46e5', textColor: '#0f172a', fontSize: 13 },
-                    { id: `ns3-${Date.now()}`, type: 'startend', text: 'เสร็จสิ้นสมบูรณ์', x: 620, y: 60, width: 170, height: 55, bgColor: '#ecfdf5', borderColor: '#10b981', textColor: '#047857', fontSize: 13 }
-                ],
-                connections: [
-                    { id: `cs1-${Date.now()}`, fromNodeId: `ns1-${Date.now()}`, fromAnchor: 'right', toNodeId: `ns2-${Date.now()}`, toAnchor: 'left', style: 'orthogonal', color: '#475569', width: 2 },
-                    { id: `cs2-${Date.now()}`, fromNodeId: `ns2-${Date.now()}`, fromAnchor: 'right', toNodeId: `ns3-${Date.now()}`, toAnchor: 'left', style: 'orthogonal', color: '#475569', width: 2 }
-                ]
-            };
-            state.pages.push(newPage);
-            subNode.linkPageId = newPage.id;
-        }
-
-        const targetIdx = state.pages.findIndex(p => p.id === subNode.linkPageId);
-        if (targetIdx !== -1) {
-            state.activePageIndex = targetIdx;
-            closeSubflowModal();
-            renderPagesTabs();
-            renderCanvas();
-            renderInspector();
-            saveHistoryState();
-        }
+        openSubflowModal(subNode, true);
     }
 
     function setupSubflowModalEvents() {
@@ -2568,18 +2536,9 @@
 
         gElem.addEventListener('dblclick', (e) => {
             e.stopPropagation();
-            if (node.linkPageId) {
-                const targetIdx = state.pages.findIndex(p => p.id === node.linkPageId);
-                if (targetIdx !== -1) {
-                    state.activePageIndex = targetIdx;
-                    state.selectedItem = null;
-                    renderPagesTabs();
-                    renderCanvas();
-                    renderInspector();
-                    return;
-                }
+            if (node.type !== 'swimlane' && node.type !== 'department' && !node.type.startsWith('issue-')) {
+                openSubflowModal(node, true);
             }
-            openInlineTextEditor(node);
         });
     }
 
