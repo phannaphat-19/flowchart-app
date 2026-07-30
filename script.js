@@ -2987,6 +2987,37 @@
         if (btnUndo) btnUndo.addEventListener('click', undo);
         if (btnRedo) btnRedo.addEventListener('click', redo);
 
+        // ปุ่มลบข้อมูลทั้งหน้า (Clear Current Page)
+        const btnClearPage = getElem('btn-clear-page');
+        if (btnClearPage) {
+            btnClearPage.addEventListener('click', () => {
+                const page = getCurrentPage();
+                const nodeCount = (page.nodes || []).length;
+                const connCount = (page.connections || []).length;
+
+                if (nodeCount === 0 && connCount === 0) {
+                    alert('⚠️ หน้านี้ไม่มีข้อมูลอยู่แล้วครับ!');
+                    return;
+                }
+
+                const confirmed = confirm(
+                    `🗑️ ลบข้อมูลทั้งหน้า "${page.name}" ใช่ไหม?\n\n` +
+                    `จะลบ: ${nodeCount} กล่อง, ${connCount} เส้นเชื่อม\n\n` +
+                    `⚠️ การกระทำนี้สามารถ Undo ได้ครับ`
+                );
+
+                if (confirmed) {
+                    page.nodes = [];
+                    page.connections = [];
+                    state.selectedItem = null;
+                    deselectAll();
+                    renderCanvas();
+                    renderInspector();
+                    saveHistoryState();
+                }
+            });
+        }
+
         const btnToggleGrid = getElem('btn-toggle-grid');
         const svgGrid = getElem('svg-grid');
         if (btnToggleGrid) {
