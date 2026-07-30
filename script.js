@@ -56,9 +56,67 @@
     let tempDepartments = [];
     let selectedSubNodeId = null;
 
+    const AUTOSAVE_KEY = 'flowstudio_pro_autosave_data_v2';
+    let autoSaveTimer = null;
+
+    function triggerAutoSave() {
+        if (autoSaveTimer) clearTimeout(autoSaveTimer);
+        autoSaveTimer = setTimeout(() => {
+            try {
+                const data = {
+                    title: state.title,
+                    activePageIndex: state.activePageIndex,
+                    pages: state.pages,
+                    issues: state.issues || [],
+                    updatedAt: new Date().toISOString()
+                };
+                localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(data));
+                flashAutoSaveBadge();
+            } catch (e) {
+                console.error('AutoSave failed:', e);
+            }
+        }, 300);
+    }
+
+    function flashAutoSaveBadge() {
+        const badge = getElem('autosave-status-badge');
+        if (badge) {
+            badge.style.transform = 'scale(1.08)';
+            badge.style.background = 'rgba(16,185,129,0.25)';
+            setTimeout(() => {
+                badge.style.transform = 'scale(1)';
+                badge.style.background = 'rgba(16,185,129,0.12)';
+            }, 300);
+        }
+    }
+
+    function loadAutoSaveData() {
+        try {
+            const raw = localStorage.getItem(AUTOSAVE_KEY);
+            if (!raw) return false;
+            const data = JSON.parse(raw);
+            if (data && Array.isArray(data.pages) && data.pages.length > 0) {
+                state.title = data.title || state.title;
+                state.pages = data.pages;
+                state.activePageIndex = Math.min(data.activePageIndex || 0, state.pages.length - 1);
+                state.issues = data.issues || [];
+
+                const titleElem = getElem('project-title');
+                if (titleElem) titleElem.textContent = state.title;
+                return true;
+            }
+        } catch (e) {
+            console.error('Failed to load autosave data:', e);
+        }
+        return false;
+    }
+
     // --- INITIALIZATION ---
     function init() {
-        createStarterNodes();
+        const loaded = loadAutoSaveData();
+        if (!loaded) {
+            createStarterNodes();
+        }
         
         renderPagesTabs();
         renderCanvas();
@@ -299,6 +357,7 @@
 
         state.redoStack = [];
         updateUndoRedoUI();
+        triggerAutoSave();
     }
 
     function undo() {
