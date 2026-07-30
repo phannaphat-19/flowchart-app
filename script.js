@@ -880,9 +880,9 @@
         const isTopLevelCall = (subflowModalStack.length === 1);
 
         let displayNode = node;
-        if (isTopLevelCall && node.linkTargetNodeId) {
+        if (isTopLevelCall && rootCanvasNode.linkTargetNodeId) {
             for (const pg of state.pages) {
-                const found = pg.nodes.find(n => n.id === node.linkTargetNodeId);
+                const found = pg.nodes.find(n => n.id === rootCanvasNode.linkTargetNodeId);
                 if (found) {
                     displayNode = found;
                     break;
@@ -916,32 +916,33 @@
                 btnBack.style.display = 'inline-flex';
                 const trail = subflowModalStack.map(n => n.text ? n.text.replace(/\n/g, ' ') : 'ขั้นตอนย่อย').join(' › ');
                 breadcrumbText.textContent = `🔍 เส้นทางผังย่อย: ${trail}`;
-            } else if (node.linkTargetNodeId && displayNode !== node) {
+            } else if (rootCanvasNode.linkTargetNodeId && displayNode !== rootCanvasNode) {
                 btnBack.style.display = 'none';
-                breadcrumbText.textContent = `🔗 ดึงผังย่อยเชื่อมโยงจาก: [${node.text ? node.text.replace(/\n/g, ' ') : ''}] ➔ [${displayNode.text ? displayNode.text.replace(/\n/g, ' ') : ''}]`;
+                breadcrumbText.textContent = `🔗 ดึงผังย่อยเชื่อมโยงจาก: [${rootCanvasNode.text ? rootCanvasNode.text.replace(/\n/g, ' ') : ''}] ➔ [${displayNode.text ? displayNode.text.replace(/\n/g, ' ') : ''}]`;
             } else {
                 btnBack.style.display = 'none';
                 breadcrumbText.textContent = '🔍 ผังกระบวนการย่อยภายใน (ลากขยับรูปทรง & แปะป้าย Red/Green Flag ปัญหาได้ทันที)';
             }
         }
 
-        const cleanTitle = node.text ? node.text.replace(/\n/g, ' ') : 'กล่องกระบวนการ';
+        // Title, Shape Preview, and Box Text ALWAYS stay as rootCanvasNode (the original box clicked)!
+        const cleanTitle = rootCanvasNode.text ? rootCanvasNode.text.replace(/\n/g, ' ') : 'กล่องกระบวนการ';
         const titleElem = getElem('modal-node-title');
         if (titleElem) titleElem.textContent = cleanTitle;
 
-        renderOriginalBoxPreview(node);
+        renderOriginalBoxPreview(rootCanvasNode);
         const leftText = getElem('modal-left-text');
-        if (leftText) leftText.value = node.text || '';
+        if (leftText) leftText.value = rootCanvasNode.text || '';
 
         const modalSharedSelect = getElem('modal-shared-flow-select');
         if (modalSharedSelect) {
             modalSharedSelect.innerHTML = '<option value="">-- ใช้ผังย่อยของกล่องตัวเอง (Default) --</option>';
             state.pages.forEach(pg => {
-                pg.nodes.filter(n => n.id !== node.id && !n.type.startsWith('issue-') && n.type !== 'swimlane' && n.type !== 'department').forEach(otherNode => {
+                pg.nodes.filter(n => n.id !== rootCanvasNode.id && !n.type.startsWith('issue-') && n.type !== 'swimlane' && n.type !== 'department').forEach(otherNode => {
                     const opt = document.createElement('option');
                     opt.value = otherNode.id;
                     opt.textContent = `🔗 ${otherNode.text ? otherNode.text.replace(/\n/g, ' ') : 'กล่องกระบวนการ'}`;
-                    if (node.linkTargetNodeId === otherNode.id) opt.selected = true;
+                    if (rootCanvasNode.linkTargetNodeId === otherNode.id) opt.selected = true;
                     modalSharedSelect.appendChild(opt);
                 });
             });
