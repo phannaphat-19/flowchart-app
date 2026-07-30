@@ -2193,8 +2193,14 @@
             g.appendChild(anchorCircle);
         });
 
-        // Direct CLICK listener on SVG element
+        // Single click selects node (allows editing colors/details in Inspector)
         g.addEventListener('click', (e) => {
+            e.stopPropagation();
+            selectItem('node', node.id);
+        });
+
+        // Double click opens Sub-Flowchart Modal
+        g.addEventListener('dblclick', (e) => {
             e.stopPropagation();
             selectItem('node', node.id);
             if (node.type !== 'swimlane' && node.type !== 'department' && !node.type.startsWith('issue-')) {
