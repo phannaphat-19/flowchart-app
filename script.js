@@ -988,7 +988,7 @@
         txt.setAttribute('y', y + h / 2);
         txt.setAttribute('font-size', '12px');
         txt.setAttribute('font-weight', '600');
-        txt.setAttribute('font-family', 'Kanit, sans-serif');
+        txt.setAttribute('font-family', "'Prompt', 'IBM Plex Sans Thai', 'Sarabun', sans-serif");
         txt.setAttribute('fill', textCol);
         txt.setAttribute('text-anchor', 'middle');
         txt.setAttribute('dominant-baseline', 'central');
@@ -1335,7 +1335,7 @@
                 flagTitle.setAttribute('fill', '#ffffff');
                 flagTitle.setAttribute('font-size', '10px');
                 flagTitle.setAttribute('font-weight', 'bold');
-                flagTitle.setAttribute('font-family', 'Kanit, sans-serif');
+                flagTitle.setAttribute('font-family', "'Prompt', 'IBM Plex Sans Thai', 'Sarabun', sans-serif");
                 flagTitle.setAttribute('text-anchor', 'middle');
                 flagTitle.setAttribute('dominant-baseline', 'central');
                 flagTitle.textContent = sn.type === 'issue-red' ? '🚩 RED FLAG ISSUE' : sn.type === 'issue-yellow' ? '🚩 YELLOW FLAG' : '🟩 GREEN FLAG';
@@ -1384,7 +1384,7 @@
             txt.setAttribute('y', txtY);
             txt.setAttribute('font-size', '11px');
             txt.setAttribute('font-weight', '600');
-            txt.setAttribute('font-family', 'Kanit, sans-serif');
+            txt.setAttribute('font-family', "'Prompt', 'IBM Plex Sans Thai', 'Sarabun', sans-serif");
             txt.setAttribute('fill', sn.type === 'issue-red' ? '#dc2626' : sn.type === 'issue-yellow' ? '#b45309' : sn.type === 'issue-green' ? '#047857' : '#0f172a');
             txt.setAttribute('text-anchor', 'middle');
             txt.setAttribute('dominant-baseline', 'central');
@@ -1930,7 +1930,7 @@
             pillText.setAttribute('fill', '#ffffff');
             pillText.setAttribute('font-size', '13px');
             pillText.setAttribute('font-weight', '600');
-            pillText.setAttribute('font-family', 'Kanit, sans-serif');
+            pillText.setAttribute('font-family', "'Prompt', 'IBM Plex Sans Thai', 'Sarabun', sans-serif");
             pillText.textContent = dept.name;
             headerPillGroup.appendChild(pillText);
 
@@ -2097,7 +2097,7 @@
                 flagTitle.setAttribute('fill', '#ffffff');
                 flagTitle.setAttribute('font-size', '11px');
                 flagTitle.setAttribute('font-weight', 'bold');
-                flagTitle.setAttribute('font-family', 'Kanit, sans-serif');
+                flagTitle.setAttribute('font-family', "'Prompt', 'IBM Plex Sans Thai', 'Sarabun', sans-serif");
                 flagTitle.setAttribute('text-anchor', 'middle');
                 flagTitle.setAttribute('dominant-baseline', 'central');
                 flagTitle.textContent = node.type === 'issue-red' ? '🚩 RED FLAG ISSUE' : node.type === 'issue-yellow' ? '🚩 YELLOW FLAG' : '🟩 GREEN FLAG (PASS)';
@@ -2201,7 +2201,7 @@
             textElem.setAttribute('y', textY);
             textElem.setAttribute('fill', textCol);
             textElem.setAttribute('font-size', `${fSize}px`);
-            textElem.setAttribute('font-family', 'Kanit, sans-serif');
+            textElem.setAttribute('font-family', "'Prompt', 'IBM Plex Sans Thai', 'Sarabun', sans-serif");
             textElem.setAttribute('font-weight', node.type.startsWith('issue-') ? '600' : '500');
             textElem.setAttribute('text-anchor', 'middle');
             textElem.setAttribute('dominant-baseline', 'central');
