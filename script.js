@@ -113,6 +113,13 @@
 
     // --- INITIALIZATION ---
     function init() {
+        // Auto-purge any stale cached elements containing 'Shared Sub-Flow' or 'แชร์ผังย่อย'
+        document.querySelectorAll('.highlight-box, div, select, label').forEach(el => {
+            if (el.textContent && (el.textContent.includes('Shared Sub-Flow') || el.textContent.includes('แชร์ผังย่อย'))) {
+                el.remove();
+            }
+        });
+
         const loaded = loadAutoSaveData();
         if (!loaded) {
             createStarterNodes();
