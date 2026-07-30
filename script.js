@@ -869,15 +869,27 @@
         const modal = getElem('subflow-modal');
         if (!modal) return;
 
-        activeSubflowCurrentNode = node;
+        // If this node is linked to another node's sub-flow:
+        let displayNode = node;
+        if (node.linkTargetNodeId) {
+            for (const pg of state.pages) {
+                const found = pg.nodes.find(n => n.id === node.linkTargetNodeId);
+                if (found) {
+                    displayNode = found;
+                    break;
+                }
+            }
+        }
 
-        if (!node.details) {
-            node.details = { desc: '', steps: '', owner: '', docs: '', issues: [], subNodes: [], subConns: [] };
+        activeSubflowCurrentNode = displayNode;
+
+        if (!displayNode.details) {
+            displayNode.details = { desc: '', steps: '', owner: '', docs: '', issues: [], subNodes: [], subConns: [] };
         }
 
         if (isPushStack) {
-            if (subflowModalStack.length === 0 || subflowModalStack[subflowModalStack.length - 1] !== node) {
-                subflowModalStack.push(node);
+            if (subflowModalStack.length === 0 || subflowModalStack[subflowModalStack.length - 1] !== displayNode) {
+                subflowModalStack.push(displayNode);
             }
         }
 
@@ -888,31 +900,34 @@
                 btnBack.style.display = 'inline-flex';
                 const trail = subflowModalStack.map(n => n.text ? n.text.replace(/\n/g, ' ') : 'ขั้นตอนย่อย').join(' › ');
                 breadcrumbText.textContent = `🔍 เส้นทางผังย่อย: ${trail}`;
+            } else if (node.linkTargetNodeId && displayNode !== node) {
+                btnBack.style.display = 'none';
+                breadcrumbText.textContent = `🔗 ดึงผังย่อยเชื่อมโยงจาก: [${node.text ? node.text.replace(/\n/g, ' ') : ''}] ➔ [${displayNode.text ? displayNode.text.replace(/\n/g, ' ') : ''}]`;
             } else {
                 btnBack.style.display = 'none';
                 breadcrumbText.textContent = '🔍 ผังกระบวนการย่อยภายใน (ลากขยับรูปทรง & แปะป้าย Red/Green Flag ปัญหาได้ทันที)';
             }
         }
 
-        const cleanTitle = node.text ? node.text.replace(/\n/g, ' ') : 'กล่องกระบวนการ';
+        const cleanTitle = displayNode.text ? displayNode.text.replace(/\n/g, ' ') : 'กล่องกระบวนการ';
         const titleElem = getElem('modal-node-title');
         if (titleElem) titleElem.textContent = cleanTitle;
 
-        renderOriginalBoxPreview(node);
+        renderOriginalBoxPreview(displayNode);
         const leftText = getElem('modal-left-text');
-        if (leftText) leftText.value = node.text || '';
+        if (leftText) leftText.value = displayNode.text || '';
         
         const descText = getElem('modal-desc');
-        if (descText) descText.value = node.details.desc || '';
+        if (descText) descText.value = displayNode.details.desc || '';
 
-        renderLargeSubFlowchartSVG(node);
-        renderNodeIssueList(node);
+        renderLargeSubFlowchartSVG(displayNode);
+        renderNodeIssueList(displayNode);
 
         const ownerInput = getElem('modal-owner');
-        if (ownerInput) ownerInput.value = node.details.owner || '';
+        if (ownerInput) ownerInput.value = displayNode.details.owner || '';
 
         const stepsText = getElem('modal-steps');
-        if (stepsText) stepsText.value = node.details.steps || '';
+        if (stepsText) stepsText.value = displayNode.details.steps || '';
 
         modal.style.display = 'flex';
         modal.style.opacity = '1';
@@ -2731,7 +2746,18 @@
             if (nodeWidthInput) nodeWidthInput.value = node.width || 140;
             if (nodeHeightInput) nodeHeightInput.value = node.height || 60;
             if (nodeShapeSelect) nodeShapeSelect.value = node.type || 'process';
-            if (nodeLinkPageSelect) nodeLinkPageSelect.value = node.linkPageId || '';
+            if (nodeLinkPageSelect) {
+                nodeLinkPageSelect.innerHTML = '<option value="">-- ใช้ผังย่อยของกล่องตัวเอง (Default) --</option>';
+                state.pages.forEach(pg => {
+                    pg.nodes.filter(n => n.id !== node.id && !n.type.startsWith('issue-') && n.type !== 'swimlane' && n.type !== 'department').forEach(otherNode => {
+                        const opt = document.createElement('option');
+                        opt.value = otherNode.id;
+                        opt.textContent = `${pg.name ? pg.name.substring(0, 10) + '... ▸ ' : ''}${otherNode.text ? otherNode.text.replace(/\n/g, ' ') : 'กล่องกระบวนการ'}`;
+                        if (node.linkTargetNodeId === otherNode.id) opt.selected = true;
+                        nodeLinkPageSelect.appendChild(opt);
+                    });
+                });
+            }
             if (nodeBgColor) nodeBgColor.value = node.bgColor || '#ffffff';
             if (nodeBorderColor) nodeBorderColor.value = node.borderColor || '#4f46e5';
             if (nodeTextColor) nodeTextColor.value = node.textColor || '#0f172a';
@@ -2820,6 +2846,19 @@
                     const node = getCurrentPage().nodes.find(n => n.id === state.selectedItem.id);
                     if (node) {
                         node.type = nodeShapeSelect.value;
+                        renderCanvas();
+                        saveHistoryState();
+                    }
+                }
+            });
+        }
+
+        if (nodeLinkPageSelect) {
+            nodeLinkPageSelect.addEventListener('change', () => {
+                if (state.selectedItem?.type === 'node') {
+                    const node = getCurrentPage().nodes.find(n => n.id === state.selectedItem.id);
+                    if (node) {
+                        node.linkTargetNodeId = nodeLinkPageSelect.value;
                         renderCanvas();
                         saveHistoryState();
                     }

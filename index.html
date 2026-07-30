@@ -302,7 +302,16 @@
                     </select>
                 </div>
 
-                <button id="btn-open-inspector-subflow" class="btn-primary-sm" style="width:100%; margin-top:8px; margin-bottom:12px; padding: 10px 14px; background: linear-gradient(135deg, #0ea5e9, #0284c7); border-radius:10px; font-weight:600; text-align:center;" title="เปิดหน้าต่างป๊อปอัพผังย่อยสำหรับกล่องที่เลือกนี้">
+                <!-- Sub-Flow Process Linking Selector -->
+                <div class="form-group highlight-box" style="background:#f0f9ff; border-color:#0ea5e9; margin-top:8px;">
+                    <label style="color:#0284c7; font-weight:700;"><i class="fa-solid fa-link"></i> เชื่อมโยงผังย่อยจากกล่องอื่น (Link Sub-Flow Process):</label>
+                    <select id="node-link-page-select" style="border-color:#0ea5e9;">
+                        <option value="">-- ใช้ผังย่อยของกล่องตัวเอง (Default) --</option>
+                    </select>
+                    <small style="color:#0369a1; display:block; margin-top:4px;">* ดับเบิ้ลคลิกกล่องนี้จะดึงผังย่อยของกล่องที่เชื่อมโยงมาเปิดให้อัตโนมัติ</small>
+                </div>
+
+                <button id="btn-open-inspector-subflow" class="btn-primary-sm" style="width:100%; margin-bottom:12px; padding: 10px 14px; background: linear-gradient(135deg, #0ea5e9, #0284c7); border-radius:10px; font-weight:600; text-align:center;" title="เปิดหน้าต่างป๊อปอัพผังย่อยสำหรับกล่องที่เลือกนี้">
                     <i class="fa-solid fa-diagram-project"></i> 🔍 เปิดดู/แก้ไขผังย่อย (Open Sub-Flow)
                 </button>
 
