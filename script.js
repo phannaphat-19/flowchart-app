@@ -869,9 +869,12 @@
         const modal = getElem('subflow-modal');
         if (!modal) return;
 
-        // If this node is linked to another node's sub-flow:
+        // ONLY resolve linkTargetNodeId for the top-level main node (Level 1)!
+        // Sub-nodes nested inside (Level 2+) NEVER inherit or trigger cross-linking!
         let displayNode = node;
-        if (node.linkTargetNodeId) {
+        const isTopLevelCall = (subflowModalStack.length === 0) || (subflowModalStack.length === 1 && subflowModalStack[0] === node);
+
+        if (isTopLevelCall && node.linkTargetNodeId) {
             for (const pg of state.pages) {
                 const found = pg.nodes.find(n => n.id === node.linkTargetNodeId);
                 if (found) {
