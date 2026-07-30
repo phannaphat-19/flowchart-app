@@ -800,19 +800,44 @@
     }
 
     // --- 3-COLUMN ULTRA-LARGE EDITABLE SUB-FLOWCHART MODAL ---
-    function openSubflowModal(node) {
+    let subflowModalStack = [];
+    let subflowModalZoom = 1.0;
+    let activeSubflowCurrentNode = null;
+
+    function openSubflowModal(node, isPushStack = true) {
         if (!node) return;
 
         const modal = getElem('subflow-modal');
         if (!modal) return;
 
+        activeSubflowCurrentNode = node;
+
+        if (!node.details) {
+            node.details = { desc: '', steps: '', owner: '', docs: '', issues: [], subNodes: [], subConns: [] };
+        }
+
+        if (isPushStack) {
+            if (subflowModalStack.length === 0 || subflowModalStack[subflowModalStack.length - 1] !== node) {
+                subflowModalStack.push(node);
+            }
+        }
+
+        const btnBack = getElem('btn-modal-back');
+        const breadcrumbText = getElem('modal-breadcrumb-text');
+        if (btnBack && breadcrumbText) {
+            if (subflowModalStack.length > 1) {
+                btnBack.style.display = 'inline-flex';
+                const trail = subflowModalStack.map(n => n.text ? n.text.replace(/\n/g, ' ') : 'ขั้นตอนย่อย').join(' › ');
+                breadcrumbText.textContent = `🔍 เส้นทางผังย่อย: ${trail}`;
+            } else {
+                btnBack.style.display = 'none';
+                breadcrumbText.textContent = '🔍 ผังกระบวนการย่อยภายใน (ลากขยับรูปทรง & แปะป้าย Red/Green Flag ปัญหาได้ทันที)';
+            }
+        }
+
         const cleanTitle = node.text ? node.text.replace(/\n/g, ' ') : 'กล่องกระบวนการ';
         const titleElem = getElem('modal-node-title');
         if (titleElem) titleElem.textContent = cleanTitle;
-
-        if (!node.details) {
-            node.details = { desc: '', steps: '', owner: '', docs: '', issues: [] };
-        }
 
         renderOriginalBoxPreview(node);
         const leftText = getElem('modal-left-text');
@@ -835,7 +860,20 @@
         modal.style.visibility = 'visible';
     }
 
+    function popSubflowModalBack() {
+        if (subflowModalStack.length > 1) {
+            subflowModalStack.pop();
+            const parentNode = subflowModalStack[subflowModalStack.length - 1];
+            openSubflowModal(parentNode, false);
+        } else {
+            subflowModalStack = [];
+            closeSubflowModal();
+        }
+    }
+
     function closeSubflowModal() {
+        subflowModalStack = [];
+        activeSubflowCurrentNode = null;
         const modal = getElem('subflow-modal');
         if (modal) modal.style.display = 'none';
     }
@@ -1073,6 +1111,15 @@
         if (!svg) return;
         svg.innerHTML = '';
 
+        // Calculate ViewBox with Unlimited Zoom support
+        const baseW = 780;
+        const baseH = 420;
+        const vbW = baseW / subflowModalZoom;
+        const vbH = baseH / subflowModalZoom;
+        svg.setAttribute('viewBox', `0 0 ${vbW} ${vbH}`);
+
+        const zoomText = getElem('subflow-zoom-text');
+        if (zoomText) zoomText.textContent = `${Math.round(subflowModalZoom * 100)}%`;
 
         if (!node.details.subNodes || !Array.isArray(node.details.subNodes)) {
             const rawSteps = node.details?.steps ? node.details.steps.split('\n').filter(s => s.trim()) : [];
@@ -1365,10 +1412,11 @@
                 window.addEventListener('mouseup', onSubMouseUp);
             });
 
-            // DOUBLE CLICK ON SUB-NODE TO DRILL DOWN INTO NESTED SUB-FLOWCHART!
+            // DOUBLE CLICK ON SUB-NODE TO DRILL DOWN INTO INFINITE POP-UP SUB-FLOWCHART!
             g.addEventListener('dblclick', (e) => {
                 e.stopPropagation();
-                drillDownSubNodeToNestedFlow(node, sn);
+                if (!sn.details) sn.details = { desc: '', steps: '', owner: '', docs: '', issues: [], subNodes: [], subConns: [] };
+                openSubflowModal(sn, true);
             });
 
             svg.appendChild(g);
@@ -1424,6 +1472,59 @@
         const btnDelSub = getElem('btn-del-subnode');
         const btnSave = getElem('btn-save-subflow-modal');
         const btnJumpPage = getElem('btn-modal-jump-page');
+
+        const btnBack = getElem('btn-modal-back');
+        if (btnBack) btnBack.addEventListener('click', popSubflowModalBack);
+
+        const btnZoomIn = getElem('btn-subflow-zoom-in');
+        const btnZoomOut = getElem('btn-subflow-zoom-out');
+        const btnZoomReset = getElem('btn-subflow-zoom-reset');
+        const largeSvg = getElem('large-subflow-svg');
+
+        if (btnZoomIn) {
+            btnZoomIn.addEventListener('click', () => {
+                subflowModalZoom = Math.min(5.0, subflowModalZoom + 0.15);
+                if (activeSubflowCurrentNode) renderLargeSubFlowchartSVG(activeSubflowCurrentNode);
+            });
+        }
+        if (btnZoomOut) {
+            btnZoomOut.addEventListener('click', () => {
+                subflowModalZoom = Math.max(0.3, subflowModalZoom - 0.15);
+                if (activeSubflowCurrentNode) renderLargeSubFlowchartSVG(activeSubflowCurrentNode);
+            });
+        }
+        if (btnZoomReset) {
+            btnZoomReset.addEventListener('click', () => {
+                subflowModalZoom = 1.0;
+                if (activeSubflowCurrentNode) renderLargeSubFlowchartSVG(activeSubflowCurrentNode);
+            });
+        }
+        if (largeSvg) {
+            largeSvg.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                if (e.deltaY < 0) {
+                    subflowModalZoom = Math.min(5.0, subflowModalZoom + 0.1);
+                } else {
+                    subflowModalZoom = Math.max(0.3, subflowModalZoom - 0.1);
+                }
+                if (activeSubflowCurrentNode) renderLargeSubFlowchartSVG(activeSubflowCurrentNode);
+            });
+        }
+
+        const btnNestFlow = getElem('btn-subnode-nest-flow');
+        if (btnNestFlow) {
+            btnNestFlow.addEventListener('click', () => {
+                if (activeSubflowCurrentNode && selectedSubNodeId) {
+                    const sn = activeSubflowCurrentNode.details?.subNodes?.find(s => s.id === selectedSubNodeId);
+                    if (sn) {
+                        if (!sn.details) sn.details = { desc: '', steps: '', owner: '', docs: '', issues: [], subNodes: [], subConns: [] };
+                        openSubflowModal(sn, true);
+                    }
+                } else {
+                    alert('⚠️ กรุณาคลิกเลือกกล่องย่อยที่ต้องการเจาะลึกผังย่อยซ้อนย่อยก่อนครับ');
+                }
+            });
+        }
 
         if (btnOpenDrawer) {
             btnOpenDrawer.addEventListener('click', (e) => {

@@ -379,9 +379,12 @@
             <!-- Modal Header -->
             <div class="large-modal-header">
                 <div class="modal-title-box">
+                    <button id="btn-modal-back" class="btn-primary-sm" style="display:none; background: linear-gradient(135deg, #4f46e5, #0ea5e9); padding: 6px 14px; font-weight:600; font-size: 0.9rem;" title="ย้อนกลับไปผังย่อยระดับก่อนหน้า">
+                        <i class="fa-solid fa-arrow-left"></i> ⬅️ ย้อนกลับ
+                    </button>
                     <i class="fa-solid fa-diagram-project" style="color: #4f46e5; font-size: 1.5rem;"></i>
                     <div class="modal-title-text">
-                        <span class="modal-subtitle">🔍 ผังกระบวนการย่อยภายใน (ลากขยับรูปทรง & แปะป้าย Red/Green Flag ปัญหาได้ทันที)</span>
+                        <span class="modal-subtitle" id="modal-breadcrumb-text">🔍 ผังกระบวนการย่อยภายใน (ลากขยับรูปทรง & แปะป้าย Red/Green Flag ปัญหาได้ทันที)</span>
                         <h2 id="modal-node-title">เริ่มต้น: รับออเดอร์ลูกค้า</h2>
                     </div>
                 </div>
@@ -434,6 +437,12 @@
                                 <button id="btn-del-subnode" class="btn-subtool-sm danger" title="ลบกล่องย่อยที่เลือก">
                                     <i class="fa-solid fa-trash-can"></i> ลบที่เลือก
                                 </button>
+                                <div class="subflow-zoom-controls" style="display:inline-flex; align-items:center; gap:4px; margin-left:4px; background: rgba(241,245,249,0.8); padding: 3px 6px; border-radius: 8px; border: 1px solid #cbd5e1;">
+                                    <button id="btn-subflow-zoom-out" class="btn-subtool-sm" title="ซูมออก (-)"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+                                    <span id="subflow-zoom-text" style="font-size:12px; font-weight:700; color:#475569; min-width:38px; text-align:center;">100%</span>
+                                    <button id="btn-subflow-zoom-in" class="btn-subtool-sm" title="ซูมเข้า (+)"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+                                    <button id="btn-subflow-zoom-reset" class="btn-subtool-sm" title="รีเซ็ตซูม (100%)"><i class="fa-solid fa-rotate-left"></i></button>
+                                </div>
                                 <button id="btn-modal-jump-page" class="btn-primary-sm">
                                     <i class="fa-solid fa-up-right-from-square"></i> หน้าแก้ไขเต็ม
                                 </button>
