@@ -225,6 +225,35 @@ body {
     box-shadow: 0 4px 12px var(--primary-glow);
 }
 
+.btn-grid-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+    background: rgba(2, 132, 199, 0.12);
+    color: var(--primary);
+    border: 1px solid rgba(2, 132, 199, 0.3);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.btn-grid-toggle:hover {
+    background: rgba(2, 132, 199, 0.22);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.15);
+}
+
+.btn-grid-toggle.off {
+    background: rgba(148, 163, 184, 0.15);
+    color: var(--text-muted);
+    border-color: rgba(148, 163, 184, 0.3);
+}
+
 .icon-btn:disabled {
     opacity: 0.35;
     cursor: not-allowed;

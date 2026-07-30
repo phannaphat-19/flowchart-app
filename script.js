@@ -55,6 +55,28 @@
 
     let tempDepartments = [];
     let selectedSubNodeId = null;
+    let showCanvasGrid = localStorage.getItem('flowstudio_show_grid') !== 'false';
+
+    function updateGridDisplay() {
+        const svgGrid = getElem('svg-grid');
+        const gridBtn = getElem('btn-toggle-grid');
+        const gridText = getElem('grid-status-text');
+
+        if (svgGrid) {
+            svgGrid.style.display = showCanvasGrid ? 'block' : 'none';
+        }
+        if (gridBtn && gridText) {
+            if (showCanvasGrid) {
+                gridBtn.classList.remove('off');
+                gridText.textContent = 'ตารางกริด: เปิด';
+                gridBtn.title = 'คลิกเพื่อซ่อนตารางกริดพื้นหลัง (Hide Background Grid)';
+            } else {
+                gridBtn.classList.add('off');
+                gridText.textContent = 'ตารางกริด: ปิด';
+                gridBtn.title = 'คลิกเพื่อแสดงตารางกริดพื้นหลัง (Show Background Grid)';
+            }
+        }
+    }
 
     const AUTOSAVE_KEY = 'flowstudio_pro_autosave_data_v2';
     let autoSaveTimer = null;
@@ -128,6 +150,7 @@
         renderPagesTabs();
         renderCanvas();
         updateUndoRedoUI();
+        updateGridDisplay();
         
         setupSidebarDragAndDrop();
         setupCanvasEvents();
@@ -3365,12 +3388,11 @@
         }
 
         const btnToggleGrid = getElem('btn-toggle-grid');
-        const svgGrid = getElem('svg-grid');
         if (btnToggleGrid) {
             btnToggleGrid.addEventListener('click', () => {
-                state.showGrid = !state.showGrid;
-                btnToggleGrid.classList.toggle('active', state.showGrid);
-                if (svgGrid) svgGrid.style.display = state.showGrid ? 'block' : 'none';
+                showCanvasGrid = !showCanvasGrid;
+                localStorage.setItem('flowstudio_show_grid', showCanvasGrid);
+                updateGridDisplay();
             });
         }
 
@@ -3427,6 +3449,7 @@
                 }
             });
         }
+
 
         const btnZoomIn = getElem('btn-zoom-in');
         const btnZoomOut = getElem('btn-zoom-out');
