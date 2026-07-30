@@ -899,11 +899,27 @@
         const bgColor = getElem('subnode-bg-color');
         const borderColor = getElem('subnode-border-color');
         const textInput = getElem('subnode-text-input');
+        const connectSelect = getElem('subnode-connect-select');
 
         if (shapeSelect) shapeSelect.value = subNode.type || 'process';
         if (bgColor) bgColor.value = subNode.bg || '#ffffff';
         if (borderColor) borderColor.value = subNode.border || '#4f46e5';
         if (textInput) textInput.value = subNode.text || '';
+
+        // Populate Connect-To Dropdown
+        if (connectSelect) {
+            connectSelect.innerHTML = '<option value="">-- เลือกกล่องปลายทาง --</option>';
+            if (node.details && Array.isArray(node.details.subNodes)) {
+                node.details.subNodes.forEach(otherSN => {
+                    if (otherSN.id !== subNode.id) {
+                        const opt = document.createElement('option');
+                        opt.value = otherSN.id;
+                        opt.textContent = `➡️ ${otherSN.text || otherSN.id}`;
+                        connectSelect.appendChild(opt);
+                    }
+                });
+            }
+        }
     }
 
     function setupSubNodeCustomizerEvents() {
@@ -911,6 +927,26 @@
         const bgColor = getElem('subnode-bg-color');
         const borderColor = getElem('subnode-border-color');
         const textInput = getElem('subnode-text-input');
+        const connectSelect = getElem('subnode-connect-select');
+
+        if (connectSelect) {
+            connectSelect.addEventListener('change', () => {
+                const targetId = connectSelect.value;
+                if (targetId && state.selectedItem?.type === 'node' && selectedSubNodeId) {
+                    const node = getCurrentPage().nodes.find(n => n.id === state.selectedItem.id);
+                    if (node) {
+                        if (!node.details.subConns) node.details.subConns = [];
+                        // Check if connection already exists
+                        const exists = node.details.subConns.some(c => c.from === selectedSubNodeId && c.to === targetId);
+                        if (!exists) {
+                            node.details.subConns.push({ from: selectedSubNodeId, to: targetId, text: '' });
+                        }
+                        connectSelect.value = '';
+                        renderLargeSubFlowchartSVG(node);
+                    }
+                }
+            });
+        }
 
         if (shapeSelect) {
             shapeSelect.addEventListener('change', () => {
@@ -966,6 +1002,7 @@
                         if (sn) {
                             sn.text = textInput.value;
                             renderLargeSubFlowchartSVG(node);
+                            renderSubNodeCustomizer(node, sn);
                         }
                     }
                 }
