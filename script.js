@@ -869,11 +869,17 @@
         const modal = getElem('subflow-modal');
         if (!modal) return;
 
-        // ONLY resolve linkTargetNodeId for the top-level main node (Level 1)!
-        // Sub-nodes nested inside (Level 2+) NEVER inherit or trigger cross-linking!
-        let displayNode = node;
-        const isTopLevelCall = (subflowModalStack.length === 0) || (subflowModalStack.length === 1 && subflowModalStack[0] === node);
+        if (isPushStack) {
+            if (subflowModalStack.length === 0 || subflowModalStack[subflowModalStack.length - 1] !== node) {
+                subflowModalStack.push(node);
+            }
+        }
 
+        // Determine root top-level clicked node on main canvas:
+        const rootCanvasNode = subflowModalStack[0] || node;
+        const isTopLevelCall = (subflowModalStack.length === 1);
+
+        let displayNode = node;
         if (isTopLevelCall && node.linkTargetNodeId) {
             for (const pg of state.pages) {
                 const found = pg.nodes.find(n => n.id === node.linkTargetNodeId);
@@ -882,18 +888,25 @@
                     break;
                 }
             }
+        } else if (!isTopLevelCall) {
+            // Level 2+ (Zoomed in / Drilled down into nested sub-nodes):
+            // Isolate nested sub-flows so child nodes DO NOT link together across levels!
+            if (!node._isolatedDetailsMap) node._isolatedDetailsMap = {};
+            const rootKey = rootCanvasNode.id || 'root';
+            if (!node._isolatedDetailsMap[rootKey]) {
+                const initialDetails = node.details ? JSON.parse(JSON.stringify(node.details)) : { desc: '', steps: '', owner: '', docs: '', issues: [], subNodes: [], subConns: [] };
+                node._isolatedDetailsMap[rootKey] = initialDetails;
+            }
+            displayNode = {
+                ...node,
+                details: node._isolatedDetailsMap[rootKey]
+            };
         }
 
         activeSubflowCurrentNode = displayNode;
 
         if (!displayNode.details) {
             displayNode.details = { desc: '', steps: '', owner: '', docs: '', issues: [], subNodes: [], subConns: [] };
-        }
-
-        if (isPushStack) {
-            if (subflowModalStack.length === 0 || subflowModalStack[subflowModalStack.length - 1] !== displayNode) {
-                subflowModalStack.push(displayNode);
-            }
         }
 
         const btnBack = getElem('btn-modal-back');
