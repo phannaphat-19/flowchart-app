@@ -2393,8 +2393,8 @@
                         renderCanvas();
                         saveHistoryState();
                     } else {
-                        // SINGLE CLICK -> OPEN ULTRA MODAL! (If not an issue card)
-                        selectItem('node', node.id, !node.type.startsWith('issue-'));
+                        // SINGLE CLICK -> Select Node ONLY (Allows editing in Inspector)
+                        selectItem('node', node.id, false);
                     }
                 }
             };
@@ -2923,7 +2923,7 @@
 
             const page = getCurrentPage();
             page.nodes.push(newNode);
-            selectItem('node', newNode.id, shapeType !== 'swimlane' && shapeType !== 'department' && !shapeType.startsWith('issue-'));
+            selectItem('node', newNode.id, false);
 
             saveHistoryState();
         });
