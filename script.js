@@ -875,38 +875,10 @@
             }
         }
 
-        // Determine root top-level clicked node on main canvas:
-        const rootCanvasNode = subflowModalStack[0] || node;
-        const isTopLevelCall = (subflowModalStack.length === 1);
+        activeSubflowCurrentNode = node;
 
-        let displayNode = node;
-        if (isTopLevelCall && rootCanvasNode.linkTargetNodeId) {
-            for (const pg of state.pages) {
-                const found = pg.nodes.find(n => n.id === rootCanvasNode.linkTargetNodeId);
-                if (found) {
-                    displayNode = found;
-                    break;
-                }
-            }
-        } else if (!isTopLevelCall) {
-            // Level 2+ (Zoomed in / Drilled down into nested sub-nodes):
-            // Isolate nested sub-flows so child nodes DO NOT link together across levels!
-            if (!node._isolatedDetailsMap) node._isolatedDetailsMap = {};
-            const rootKey = rootCanvasNode.id || 'root';
-            if (!node._isolatedDetailsMap[rootKey]) {
-                const initialDetails = node.details ? JSON.parse(JSON.stringify(node.details)) : { desc: '', steps: '', owner: '', docs: '', issues: [], subNodes: [], subConns: [] };
-                node._isolatedDetailsMap[rootKey] = initialDetails;
-            }
-            displayNode = {
-                ...node,
-                details: node._isolatedDetailsMap[rootKey]
-            };
-        }
-
-        activeSubflowCurrentNode = displayNode;
-
-        if (!displayNode.details) {
-            displayNode.details = { desc: '', steps: '', owner: '', docs: '', issues: [], subNodes: [], subConns: [] };
+        if (!node.details) {
+            node.details = { desc: '', steps: '', owner: '', docs: '', issues: [], subNodes: [], subConns: [] };
         }
 
         const btnBack = getElem('btn-modal-back');
@@ -916,49 +888,31 @@
                 btnBack.style.display = 'inline-flex';
                 const trail = subflowModalStack.map(n => n.text ? n.text.replace(/\n/g, ' ') : 'ขั้นตอนย่อย').join(' › ');
                 breadcrumbText.textContent = `🔍 เส้นทางผังย่อย: ${trail}`;
-            } else if (rootCanvasNode.linkTargetNodeId && displayNode !== rootCanvasNode) {
-                btnBack.style.display = 'none';
-                breadcrumbText.textContent = `🔗 ดึงผังย่อยเชื่อมโยงจาก: [${rootCanvasNode.text ? rootCanvasNode.text.replace(/\n/g, ' ') : ''}] ➔ [${displayNode.text ? displayNode.text.replace(/\n/g, ' ') : ''}]`;
             } else {
                 btnBack.style.display = 'none';
                 breadcrumbText.textContent = '🔍 ผังกระบวนการย่อยภายใน (ลากขยับรูปทรง & แปะป้าย Red/Green Flag ปัญหาได้ทันที)';
             }
         }
 
-        // Title, Shape Preview, and Box Text ALWAYS stay as rootCanvasNode (the original box clicked)!
-        const cleanTitle = rootCanvasNode.text ? rootCanvasNode.text.replace(/\n/g, ' ') : 'กล่องกระบวนการ';
+        const cleanTitle = node.text ? node.text.replace(/\n/g, ' ') : 'กล่องกระบวนการ';
         const titleElem = getElem('modal-node-title');
         if (titleElem) titleElem.textContent = cleanTitle;
 
-        renderOriginalBoxPreview(rootCanvasNode);
+        renderOriginalBoxPreview(node);
         const leftText = getElem('modal-left-text');
-        if (leftText) leftText.value = rootCanvasNode.text || '';
+        if (leftText) leftText.value = node.text || '';
 
-        const modalSharedSelect = getElem('modal-shared-flow-select');
-        if (modalSharedSelect) {
-            modalSharedSelect.innerHTML = '<option value="">-- ใช้ผังย่อยของกล่องตัวเอง (Default) --</option>';
-            state.pages.forEach(pg => {
-                pg.nodes.filter(n => n.id !== rootCanvasNode.id && !n.type.startsWith('issue-') && n.type !== 'swimlane' && n.type !== 'department').forEach(otherNode => {
-                    const opt = document.createElement('option');
-                    opt.value = otherNode.id;
-                    opt.textContent = `🔗 ${otherNode.text ? otherNode.text.replace(/\n/g, ' ') : 'กล่องกระบวนการ'}`;
-                    if (rootCanvasNode.linkTargetNodeId === otherNode.id) opt.selected = true;
-                    modalSharedSelect.appendChild(opt);
-                });
-            });
-        }
-        
         const descText = getElem('modal-desc');
-        if (descText) descText.value = displayNode.details.desc || '';
+        if (descText) descText.value = node.details.desc || '';
 
-        renderLargeSubFlowchartSVG(displayNode);
-        renderNodeIssueList(displayNode);
+        renderLargeSubFlowchartSVG(node);
+        renderNodeIssueList(node);
 
         const ownerInput = getElem('modal-owner');
-        if (ownerInput) ownerInput.value = displayNode.details.owner || '';
+        if (ownerInput) ownerInput.value = node.details.owner || '';
 
         const stepsText = getElem('modal-steps');
-        if (stepsText) stepsText.value = displayNode.details.steps || '';
+        if (stepsText) stepsText.value = node.details.steps || '';
 
         modal.style.display = 'flex';
         modal.style.opacity = '1';
@@ -2348,28 +2302,6 @@
             });
 
             g.appendChild(infoBadge);
-        }
-
-        if (node.linkTargetNodeId) {
-            const badge = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-            badge.setAttribute('transform', `translate(${w - 18}, ${h - 18})`);
-            
-            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-            circle.setAttribute('r', 11);
-            circle.setAttribute('fill', '#0284c7');
-            circle.setAttribute('stroke', '#ffffff');
-            circle.setAttribute('stroke-width', '1.5');
-            badge.appendChild(circle);
-
-            const icon = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-            icon.setAttribute('font-size', '10px');
-            icon.setAttribute('fill', '#ffffff');
-            icon.setAttribute('text-anchor', 'middle');
-            icon.setAttribute('dominant-baseline', 'central');
-            icon.textContent = '🔗';
-            badge.appendChild(icon);
-
-            g.appendChild(badge);
         }
 
         const anchors = getAnchorPositions(node);

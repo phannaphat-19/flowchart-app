@@ -302,16 +302,7 @@
                     </select>
                 </div>
 
-                <!-- Sub-Flow Process Linking Selector -->
-                <div class="form-group highlight-box" style="background:#f0f9ff; border-color:#0ea5e9; margin-top:8px;">
-                    <label style="color:#0284c7; font-weight:700;"><i class="fa-solid fa-share-nodes"></i> แชร์ผังย่อยร่วมกันกับกล่องอื่น (Shared Sub-Flow):</label>
-                    <select id="node-link-page-select" style="border-color:#0ea5e9;">
-                        <option value="">-- ใช้ผังย่อยของกล่องตัวเอง (Default) --</option>
-                    </select>
-                    <small style="color:#0369a1; display:block; margin-top:4px;">* เช่น เลือกแชร์ผัง "งานเคลม" จากแผนกเซลล์ มาใช้ในแผนกคลังโดยไม่ต้องทำใหม่</small>
-                </div>
-
-                <button id="btn-open-inspector-subflow" class="btn-primary-sm" style="width:100%; margin-bottom:12px; padding: 10px 14px; background: linear-gradient(135deg, #0ea5e9, #0284c7); border-radius:10px; font-weight:600; text-align:center;" title="เปิดหน้าต่างป๊อปอัพผังย่อยสำหรับกล่องที่เลือกนี้">
+                <button id="btn-open-inspector-subflow" class="btn-primary-sm" style="width:100%; margin-top:8px; margin-bottom:12px; padding: 10px 14px; background: linear-gradient(135deg, #0ea5e9, #0284c7); border-radius:10px; font-weight:600; text-align:center;" title="เปิดหน้าต่างป๊อปอัพผังย่อยสำหรับกล่องที่เลือกนี้">
                     <i class="fa-solid fa-diagram-project"></i> 🔍 เปิดดู/แก้ไขผังย่อย (Open Sub-Flow)
                 </button>
 
@@ -413,12 +404,6 @@
                         <div class="form-group" style="margin-top: 12px;">
                             <label><i class="fa-solid fa-font"></i> ข้อความในกล่อง (Box Text)</label>
                             <textarea id="modal-left-text" rows="3"></textarea>
-                        </div>
-                        <div class="form-group highlight-box" style="margin-top: 8px; background:#f0f9ff; border-color:#0ea5e9;">
-                            <label style="color:#0284c7; font-weight:700;"><i class="fa-solid fa-share-nodes"></i> แชร์ผังย่อยร่วมกับกล่องอื่น (Shared Sub-Flow)</label>
-                            <select id="modal-shared-flow-select" style="border-color:#0ea5e9; font-size:12px; margin-top:4px;">
-                                <option value="">-- ใช้ผังย่อยของกล่องตัวเอง (Default) --</option>
-                            </select>
                         </div>
                         <div class="form-group">
                             <label><i class="fa-solid fa-circle-info"></i> หลักการทำงาน (Principle)</label>
