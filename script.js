@@ -2309,20 +2309,23 @@
             g.appendChild(infoBadge);
         }
 
-        if (node.linkPageId) {
+        if (node.linkTargetNodeId) {
             const badge = document.createElementNS('http://www.w3.org/2000/svg', 'g');
             badge.setAttribute('transform', `translate(${w - 18}, ${h - 18})`);
             
             const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-            circle.setAttribute('r', 10);
-            circle.setAttribute('fill', '#4f46e5');
+            circle.setAttribute('r', 11);
+            circle.setAttribute('fill', '#0284c7');
+            circle.setAttribute('stroke', '#ffffff');
+            circle.setAttribute('stroke-width', '1.5');
             badge.appendChild(circle);
 
-            const icon = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            icon.setAttribute('d', 'M -3,-3 L 3,-3 L 3,3 M 3,-3 L -4,4');
-            icon.setAttribute('stroke', '#ffffff');
-            icon.setAttribute('stroke-width', '1.5');
-            icon.setAttribute('fill', 'none');
+            const icon = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            icon.setAttribute('font-size', '10px');
+            icon.setAttribute('fill', '#ffffff');
+            icon.setAttribute('text-anchor', 'middle');
+            icon.setAttribute('dominant-baseline', 'central');
+            icon.textContent = '🔗';
             badge.appendChild(icon);
 
             g.appendChild(badge);
