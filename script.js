@@ -2827,14 +2827,13 @@
             });
         }
 
-        if (nodeLinkPageSelect) {
-            nodeLinkPageSelect.addEventListener('change', () => {
+        const btnOpenInspectorSubflow = getElem('btn-open-inspector-subflow');
+        if (btnOpenInspectorSubflow) {
+            btnOpenInspectorSubflow.addEventListener('click', () => {
                 if (state.selectedItem?.type === 'node') {
                     const node = getCurrentPage().nodes.find(n => n.id === state.selectedItem.id);
-                    if (node) {
-                        node.linkPageId = nodeLinkPageSelect.value;
-                        renderCanvas();
-                        saveHistoryState();
+                    if (node && node.type !== 'swimlane' && node.type !== 'department' && !node.type.startsWith('issue-')) {
+                        openSubflowModal(node, true);
                     }
                 }
             });
