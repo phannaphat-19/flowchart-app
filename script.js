@@ -900,6 +900,7 @@
         const borderColor = getElem('subnode-border-color');
         const textInput = getElem('subnode-text-input');
         const connectSelect = getElem('subnode-connect-select');
+        const deleteConnSelect = getElem('subnode-delete-conn-select');
 
         if (shapeSelect) shapeSelect.value = subNode.type || 'process';
         if (bgColor) bgColor.value = subNode.bg || '#ffffff';
@@ -920,6 +921,21 @@
                 });
             }
         }
+
+        // Populate Delete Connection Dropdown
+        if (deleteConnSelect) {
+            deleteConnSelect.innerHTML = '<option value="">-- เลือกเส้นที่จะลบ --</option>';
+            if (node.details && Array.isArray(node.details.subConns)) {
+                node.details.subConns.forEach((c, idx) => {
+                    const fromSN = node.details.subNodes.find(sn => sn.id === c.from);
+                    const toSN = node.details.subNodes.find(sn => sn.id === c.to);
+                    const opt = document.createElement('option');
+                    opt.value = idx;
+                    opt.textContent = `✂️ (${fromSN ? fromSN.text : 'กล่อง'} ➔ ${toSN ? toSN.text : 'กล่อง'})`;
+                    deleteConnSelect.appendChild(opt);
+                });
+            }
+        }
     }
 
     function setupSubNodeCustomizerEvents() {
@@ -928,6 +944,25 @@
         const borderColor = getElem('subnode-border-color');
         const textInput = getElem('subnode-text-input');
         const connectSelect = getElem('subnode-connect-select');
+        const deleteConnSelect = getElem('subnode-delete-conn-select');
+
+        if (deleteConnSelect) {
+            deleteConnSelect.addEventListener('change', () => {
+                const connIdxStr = deleteConnSelect.value;
+                if (connIdxStr !== '' && state.selectedItem?.type === 'node') {
+                    const node = getCurrentPage().nodes.find(n => n.id === state.selectedItem.id);
+                    if (node && node.details?.subConns) {
+                        const idx = parseInt(connIdxStr, 10);
+                        if (!isNaN(idx) && idx >= 0 && idx < node.details.subConns.length) {
+                            node.details.subConns.splice(idx, 1);
+                            selectedSubConnIdx = -1;
+                            deleteConnSelect.value = '';
+                            renderLargeSubFlowchartSVG(node);
+                        }
+                    }
+                }
+            });
+        }
 
         if (connectSelect) {
             connectSelect.addEventListener('change', () => {
@@ -1060,6 +1095,9 @@
             const isConnSel = selectedSubConnIdx === connIdx;
 
             if (conn.isLoopback) {
+                const midX = (fromSN.x + toSN.x) / 2;
+                const midY = fromSN.y + fromSN.h + 40;
+
                 const pathNo = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                 pathNo.setAttribute('d', `M ${fromSN.x + fromSN.w/2},${fromSN.y + fromSN.h} L ${fromSN.x + fromSN.w/2},${fromSN.y + fromSN.h + 40} L ${toSN.x + toSN.w/2},${fromSN.y + fromSN.h + 40} L ${toSN.x + toSN.w/2},${toSN.y + toSN.h}`);
                 pathNo.setAttribute('fill', 'none');
@@ -1076,21 +1114,67 @@
                 });
                 svg.appendChild(pathNo);
 
+                // Quick Delete ✕ Badge
+                const delCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                delCircle.setAttribute('cx', midX); delCircle.setAttribute('cy', midY);
+                delCircle.setAttribute('r', '9'); delCircle.setAttribute('fill', '#fee2e2');
+                delCircle.setAttribute('stroke', '#ef4444'); delCircle.setAttribute('stroke-width', '1.5');
+                delCircle.style.cursor = 'pointer';
+                delCircle.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    node.details.subConns.splice(connIdx, 1);
+                    selectedSubConnIdx = -1;
+                    renderLargeSubFlowchartSVG(node);
+                });
+                svg.appendChild(delCircle);
+
+                const delTxt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                delTxt.setAttribute('x', midX); delTxt.setAttribute('y', midY);
+                delTxt.setAttribute('font-size', '9px'); delTxt.setAttribute('fill', '#ef4444');
+                delTxt.setAttribute('font-weight', 'bold'); delTxt.setAttribute('text-anchor', 'middle');
+                delTxt.setAttribute('dominant-baseline', 'central'); delTxt.style.cursor = 'pointer';
+                delTxt.textContent = '✕';
+                delTxt.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    node.details.subConns.splice(connIdx, 1);
+                    selectedSubConnIdx = -1;
+                    renderLargeSubFlowchartSVG(node);
+                });
+                svg.appendChild(delTxt);
+
                 if (conn.text) {
                     const txtNo = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                    txtNo.setAttribute('x', (fromSN.x + toSN.x) / 2); txtNo.setAttribute('y', fromSN.y + fromSN.h + 34);
+                    txtNo.setAttribute('x', (fromSN.x + toSN.x) / 2); txtNo.setAttribute('y', fromSN.y + fromSN.h + 24);
                     txtNo.setAttribute('font-size', '11px'); txtNo.setAttribute('fill', '#ef4444'); txtNo.setAttribute('font-weight', 'bold');
                     txtNo.textContent = conn.text;
                     svg.appendChild(txtNo);
                 }
             } else {
-                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
                 const isVert = Math.abs(fromSN.x - toSN.x) < Math.abs(fromSN.y - toSN.y);
                 const x1 = isVert ? fromSN.x + fromSN.w/2 : fromSN.x + fromSN.w;
                 const y1 = isVert ? fromSN.y + fromSN.h : fromSN.y + fromSN.h/2;
                 const x2 = isVert ? toSN.x + toSN.w/2 : toSN.x;
                 const y2 = isVert ? toSN.y : toSN.y + toSN.h/2;
 
+                const midX = (x1 + x2) / 2;
+                const midY = (y1 + y2) / 2;
+
+                // Thick invisible hit-box line
+                const hitLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                hitLine.setAttribute('x1', x1); hitLine.setAttribute('y1', y1);
+                hitLine.setAttribute('x2', x2); hitLine.setAttribute('y2', y2);
+                hitLine.setAttribute('stroke', 'transparent');
+                hitLine.setAttribute('stroke-width', '24');
+                hitLine.style.cursor = 'pointer';
+                hitLine.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    selectedSubConnIdx = connIdx;
+                    selectedSubNodeId = null;
+                    renderLargeSubFlowchartSVG(node);
+                });
+                svg.appendChild(hitLine);
+
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
                 line.setAttribute('x1', x1); line.setAttribute('y1', y1);
                 line.setAttribute('x2', x2); line.setAttribute('y2', y2);
                 line.setAttribute('stroke', isConnSel ? '#06b6d4' : '#4f46e5');
@@ -1105,9 +1189,37 @@
                 });
                 svg.appendChild(line);
 
+                // Quick Delete ✕ Badge
+                const delCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                delCircle.setAttribute('cx', midX); delCircle.setAttribute('cy', midY);
+                delCircle.setAttribute('r', '9'); delCircle.setAttribute('fill', '#fee2e2');
+                delCircle.setAttribute('stroke', '#ef4444'); delCircle.setAttribute('stroke-width', '1.5');
+                delCircle.style.cursor = 'pointer';
+                delCircle.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    node.details.subConns.splice(connIdx, 1);
+                    selectedSubConnIdx = -1;
+                    renderLargeSubFlowchartSVG(node);
+                });
+                svg.appendChild(delCircle);
+
+                const delTxt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                delTxt.setAttribute('x', midX); delTxt.setAttribute('y', midY);
+                delTxt.setAttribute('font-size', '9px'); delTxt.setAttribute('fill', '#ef4444');
+                delTxt.setAttribute('font-weight', 'bold'); delTxt.setAttribute('text-anchor', 'middle');
+                delTxt.setAttribute('dominant-baseline', 'central'); delTxt.style.cursor = 'pointer';
+                delTxt.textContent = '✕';
+                delTxt.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    node.details.subConns.splice(connIdx, 1);
+                    selectedSubConnIdx = -1;
+                    renderLargeSubFlowchartSVG(node);
+                });
+                svg.appendChild(delTxt);
+
                 if (conn.text) {
                     const txtYes = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                    txtYes.setAttribute('x', (x1 + x2) / 2 + 8); txtYes.setAttribute('y', (y1 + y2) / 2);
+                    txtYes.setAttribute('x', (x1 + x2) / 2 + 12); txtYes.setAttribute('y', (y1 + y2) / 2 - 12);
                     txtYes.setAttribute('font-size', '11px'); txtYes.setAttribute('fill', '#10b981'); txtYes.setAttribute('font-weight', 'bold');
                     txtYes.textContent = conn.text;
                     svg.appendChild(txtYes);
