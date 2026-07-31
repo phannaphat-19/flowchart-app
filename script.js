@@ -60,7 +60,6 @@
     function updateGridDisplay() {
         const svgGrid = getElem('svg-grid');
         const gridBtn = getElem('btn-toggle-grid');
-        const gridText = getElem('grid-status-text');
 
         const modalGridBtn = getElem('btn-modal-toggle-grid');
         const modalGridText = getElem('modal-grid-status-text');
@@ -68,14 +67,14 @@
         if (svgGrid) {
             svgGrid.style.display = showCanvasGrid ? 'block' : 'none';
         }
-        if (gridBtn && gridText) {
+        if (gridBtn) {
             if (showCanvasGrid) {
-                gridBtn.classList.remove('off');
-                gridText.textContent = 'ตารางกริด: เปิด';
+                gridBtn.classList.add('active');
+                gridBtn.style.color = '#0284c7';
                 gridBtn.title = 'คลิกเพื่อซ่อนตารางกริดพื้นหลัง (Hide Background Grid)';
             } else {
-                gridBtn.classList.add('off');
-                gridText.textContent = 'ตารางกริด: ปิด';
+                gridBtn.classList.remove('active');
+                gridBtn.style.color = '#94a3b8';
                 gridBtn.title = 'คลิกเพื่อแสดงตารางกริดพื้นหลัง (Show Background Grid)';
             }
         }
