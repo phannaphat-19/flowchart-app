@@ -62,6 +62,9 @@
         const gridBtn = getElem('btn-toggle-grid');
         const gridText = getElem('grid-status-text');
 
+        const modalGridBtn = getElem('btn-modal-toggle-grid');
+        const modalGridText = getElem('modal-grid-status-text');
+
         if (svgGrid) {
             svgGrid.style.display = showCanvasGrid ? 'block' : 'none';
         }
@@ -74,6 +77,15 @@
                 gridBtn.classList.add('off');
                 gridText.textContent = 'ตารางกริด: ปิด';
                 gridBtn.title = 'คลิกเพื่อแสดงตารางกริดพื้นหลัง (Show Background Grid)';
+            }
+        }
+        if (modalGridBtn && modalGridText) {
+            if (showCanvasGrid) {
+                modalGridBtn.classList.remove('off');
+                modalGridText.textContent = 'ตาราง: เปิด';
+            } else {
+                modalGridBtn.classList.add('off');
+                modalGridText.textContent = 'ตาราง: ปิด';
             }
         }
     }
@@ -1238,8 +1250,32 @@
         mPath.setAttribute('d', 'M 0 0 L 10 5 L 0 10 z');
         mPath.setAttribute('fill', '#4f46e5');
         marker.appendChild(mPath);
+        if (showCanvasGrid) {
+            const gridPattern = document.createElementNS('http://www.w3.org/2000/svg', 'pattern');
+            gridPattern.setAttribute('id', 'subflow-grid-pattern');
+            gridPattern.setAttribute('width', '20');
+            gridPattern.setAttribute('height', '20');
+            gridPattern.setAttribute('patternUnits', 'userSpaceOnUse');
+
+            const gridDot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            gridDot.setAttribute('cx', '2');
+            gridDot.setAttribute('cy', '2');
+            gridDot.setAttribute('r', '1.2');
+            gridDot.setAttribute('class', 'grid-dot');
+            gridPattern.appendChild(gridDot);
+            defs.appendChild(gridPattern);
+        }
+
         defs.appendChild(marker);
         svg.appendChild(defs);
+
+        if (showCanvasGrid) {
+            const gridRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            gridRect.setAttribute('width', '100%');
+            gridRect.setAttribute('height', '100%');
+            gridRect.setAttribute('fill', 'url(#subflow-grid-pattern)');
+            svg.appendChild(gridRect);
+        }
 
         // Render Connections
         (node.details.subConns || []).forEach((conn, connIdx) => {
@@ -1549,7 +1585,16 @@
         const btnZoomIn = getElem('btn-subflow-zoom-in');
         const btnZoomOut = getElem('btn-subflow-zoom-out');
         const btnZoomReset = getElem('btn-subflow-zoom-reset');
+        const btnModalToggleGrid = getElem('btn-modal-toggle-grid');
         const largeSvg = getElem('large-subflow-svg');
+
+        if (btnModalToggleGrid) {
+            btnModalToggleGrid.addEventListener('click', () => {
+                showCanvasGrid = !showCanvasGrid;
+                localStorage.setItem('flowstudio_show_grid', showCanvasGrid);
+                updateGridDisplay();
+            });
+        }
 
         if (btnZoomIn) {
             btnZoomIn.addEventListener('click', () => {
