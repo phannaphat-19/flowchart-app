@@ -3314,6 +3314,23 @@
                 const shapeType = item.getAttribute('data-type');
                 e.dataTransfer.setData('text/plain', shapeType);
             });
+
+            item.addEventListener('click', () => {
+                const shapeType = item.getAttribute('data-type');
+                if (!shapeType) return;
+
+                const svg = getElem('flow-svg');
+                let dropX = 180 + (Math.random() * 40);
+                let dropY = 120 + (Math.random() * 40);
+
+                if (svg) {
+                    const rect = svg.getBoundingClientRect();
+                    dropX = (rect.width / 2 - state.pan.x) / state.zoom - 70;
+                    dropY = (rect.height / 2 - state.pan.y) / state.zoom - 30;
+                }
+
+                addShapeToCanvas(shapeType, dropX, dropY);
+            });
         });
 
         const canvasViewport = getElem('canvas-viewport');
@@ -3336,76 +3353,84 @@
             let dropX = (e.clientX - rect.left - state.pan.x) / state.zoom;
             let dropY = (e.clientY - rect.top - state.pan.y) / state.zoom;
 
-            if (state.gridSnap) {
-                dropX = Math.round(dropX / 20) * 20;
-                dropY = Math.round(dropY / 20) * 20;
-            }
-
-            const defaultWidths = { swimlane: 400, department: 300, startend: 140, decision: 140, 'issue-red': 210, 'issue-yellow': 210, 'issue-green': 210 };
-            const defaultHeights = { swimlane: 250, department: 200, startend: 55, decision: 100, 'issue-red': 65, 'issue-yellow': 65, 'issue-green': 65 };
-
-            const defaultLabels = {
-                'issue-red': '🚩 ระบุรายละเอียดปัญหาคอขวด (Red Flag)...',
-                'issue-yellow': '🚩 ระบุรายละเอียดข้อควรเฝ้าระวัง (Yellow Flag)...',
-                'issue-green': '🟩 ระบุข้อความผ่าน/แก้ไขเรียบร้อย (Green Flag)...',
-                startend: 'เริ่ม / จบ\n(Start / End)',
-                process: 'กระบวนการ\n(Process)',
-                decision: 'เงื่อนไข?\n(Decision?)',
-                inputoutput: 'รับ/แสดงผล\n(Input / Output)',
-                document: 'เอกสาร\n(Document)',
-                connector: 'จุดเชื่อม\n(Connector)',
-                subprocess: 'ขั้นตอนย่อย\n(Sub-Process)',
-                swimlane: 'ขอบเขตสายงาน (Swimlane)',
-                department: 'แผนก / Department',
-                text: 'ข้อความอิสระ\n(Text Label)'
-            };
-
-            const defaultColors = {
-                'issue-red': { bg: '#fef2f2', border: '#ef4444' },
-                'issue-yellow': { bg: '#fffbeb', border: '#f59e0b' },
-                'issue-green': { bg: '#ecfdf5', border: '#10b981' },
-                startend: { bg: '#ecfdf5', border: '#10b981' },
-                process: { bg: '#ffffff', border: '#4f46e5' },
-                decision: { bg: '#fffbeb', border: '#f59e0b' },
-                inputoutput: { bg: '#f5f3ff', border: '#8b5cf6' },
-                document: { bg: '#fdf2f8', border: '#ec4899' },
-                connector: { bg: '#ecfeff', border: '#06b6d4' },
-                subprocess: { bg: '#e0e7ff', border: '#6366f1' },
-                swimlane: { bg: '#f8fafc', border: '#94a3b8' },
-                department: { bg: '#f0f9ff', border: '#0ea5e9' },
-                text: { bg: 'transparent', border: 'transparent' }
-            };
-
-            const colors = defaultColors[shapeType] || { bg: '#ffffff', border: '#4f46e5' };
-
-            const newNode = {
-                id: `node-${Date.now()}`,
-                type: shapeType,
-                text: defaultLabels[shapeType] || 'ข้อความ',
-                x: dropX,
-                y: dropY,
-                width: defaultWidths[shapeType] || 140,
-                height: defaultHeights[shapeType] || 60,
-                bgColor: colors.bg,
-                borderColor: colors.border,
-                textColor: shapeType === 'issue-red' ? '#dc2626' : shapeType === 'issue-yellow' ? '#b45309' : shapeType === 'issue-green' ? '#047857' : '#0f172a',
-                fontSize: 12,
-                linkPageId: '',
-                details: {
-                    desc: 'ระบุหลักการทำงานของกล่องนี้...',
-                    steps: '1. ขั้นตอนที่หนึ่ง\n2. ขั้นตอนที่สอง\n3. ขั้นตอนที่สาม',
-                    owner: 'ระบุผู้รับผิดชอบ',
-                    docs: 'ระบุเอกสารอ้างอิง',
-                    issues: []
-                }
-            };
-
-            const page = getCurrentPage();
-            page.nodes.push(newNode);
-            selectItem('node', newNode.id, false);
-
-            saveHistoryState();
+            addShapeToCanvas(shapeType, dropX, dropY);
         });
+    }
+
+    function addShapeToCanvas(shapeType, dropX, dropY) {
+        if (!shapeType) return;
+
+        if (state.gridSnap) {
+            dropX = Math.round(dropX / 20) * 20;
+            dropY = Math.round(dropY / 20) * 20;
+        }
+
+        const defaultWidths = { swimlane: 400, department: 300, startend: 140, decision: 140, 'issue-red': 210, 'issue-yellow': 210, 'issue-green': 210 };
+        const defaultHeights = { swimlane: 250, department: 200, startend: 55, decision: 100, 'issue-red': 65, 'issue-yellow': 65, 'issue-green': 65 };
+
+        const defaultLabels = {
+            'issue-red': '🚩 ระบุรายละเอียดปัญหาคอขวด (Red Flag)...',
+            'issue-yellow': '🚩 ระบุรายละเอียดข้อควรเฝ้าระวัง (Yellow Flag)...',
+            'issue-green': '🟩 ระบุข้อความผ่าน/แก้ไขเรียบร้อย (Green Flag)...',
+            startend: 'เริ่ม / จบ\n(Start / End)',
+            process: 'กระบวนการ\n(Process)',
+            decision: 'เงื่อนไข?\n(Decision?)',
+            inputoutput: 'รับ/แสดงผล\n(Input / Output)',
+            document: 'เอกสาร\n(Document)',
+            connector: 'จุดเชื่อม\n(Connector)',
+            subprocess: 'ขั้นตอนย่อย\n(Sub-Process)',
+            swimlane: 'ขอบเขตสายงาน (Swimlane)',
+            department: 'แผนก / Department',
+            text: 'ข้อความอิสระ\n(Text Label)'
+        };
+
+        const defaultColors = {
+            'issue-red': { bg: '#fef2f2', border: '#ef4444' },
+            'issue-yellow': { bg: '#fffbeb', border: '#f59e0b' },
+            'issue-green': { bg: '#ecfdf5', border: '#10b981' },
+            startend: { bg: '#ecfdf5', border: '#10b981' },
+            process: { bg: '#ffffff', border: '#4f46e5' },
+            decision: { bg: '#fffbeb', border: '#f59e0b' },
+            inputoutput: { bg: '#f5f3ff', border: '#8b5cf6' },
+            document: { bg: '#fdf2f8', border: '#ec4899' },
+            connector: { bg: '#ecfeff', border: '#06b6d4' },
+            subprocess: { bg: '#e0e7ff', border: '#6366f1' },
+            swimlane: { bg: '#f8fafc', border: '#94a3b8' },
+            department: { bg: '#f0f9ff', border: '#0ea5e9' },
+            text: { bg: 'transparent', border: 'transparent' }
+        };
+
+        const colors = defaultColors[shapeType] || { bg: '#ffffff', border: '#4f46e5' };
+
+        const newNode = {
+            id: `node-${Date.now()}`,
+            type: shapeType,
+            text: defaultLabels[shapeType] || 'ข้อความ',
+            x: dropX,
+            y: dropY,
+            width: defaultWidths[shapeType] || 140,
+            height: defaultHeights[shapeType] || 60,
+            bgColor: colors.bg,
+            borderColor: colors.border,
+            textColor: shapeType === 'issue-red' ? '#dc2626' : shapeType === 'issue-yellow' ? '#b45309' : shapeType === 'issue-green' ? '#047857' : '#0f172a',
+            fontSize: 12,
+            linkPageId: '',
+            details: {
+                desc: 'ระบุหลักการทำงานของกล่องนี้...',
+                steps: '1. ขั้นตอนที่หนึ่ง\n2. ขั้นตอนที่สอง\n3. ขั้นตอนที่สาม',
+                owner: 'ระบุผู้รับผิดชอบ',
+                docs: 'ระบุเอกสารอ้างอิง',
+                issues: []
+            }
+        };
+
+        const page = getCurrentPage();
+        page.nodes.push(newNode);
+        selectItem('node', newNode.id, false);
+
+        renderCanvas();
+        renderInspector();
+        saveHistoryState();
     }
 
     function setupCanvasEvents() {
