@@ -2767,29 +2767,41 @@
 
             if (!state.connecting.active) return;
 
-            const targetAnchor = document.elementFromPoint(upEvent.clientX, upEvent.clientY);
-            if (targetAnchor && targetAnchor.classList.contains('node-anchor')) {
-                const toNodeId = targetAnchor.getAttribute('data-node-id');
-                const toAnchorPos = targetAnchor.getAttribute('data-anchor');
+            let hitElem = document.elementFromPoint(upEvent.clientX, upEvent.clientY);
+            let toNodeId = null;
+            let toAnchorPos = 'top';
 
-                if (toNodeId && toNodeId !== state.connecting.fromNodeId) {
-                    const newConn = {
-                        id: `conn-${Date.now()}`,
-                        fromNodeId: state.connecting.fromNodeId,
-                        fromAnchor: state.connecting.fromAnchor,
-                        toNodeId: toNodeId,
-                        toAnchor: toAnchorPos,
-                        text: '',
-                        style: 'orthogonal',
-                        color: '#475569',
-                        width: 2,
-                        dash: 'none'
-                    };
-                    page.connections.push(newConn);
-                    selectItem('connection', newConn.id);
-                    renderCanvas();
-                    saveHistoryState();
+            if (hitElem) {
+                const anchorElem = hitElem.closest ? hitElem.closest('.node-anchor') : null;
+                if (anchorElem) {
+                    toNodeId = anchorElem.getAttribute('data-node-id');
+                    toAnchorPos = anchorElem.getAttribute('data-anchor');
+                } else {
+                    const nodeElem = hitElem.closest ? hitElem.closest('.flow-node') : null;
+                    if (nodeElem) {
+                        toNodeId = nodeElem.getAttribute('data-id');
+                        toAnchorPos = 'top';
+                    }
                 }
+            }
+
+            if (toNodeId && toNodeId !== state.connecting.fromNodeId) {
+                const newConn = {
+                    id: `conn-${Date.now()}`,
+                    fromNodeId: state.connecting.fromNodeId,
+                    fromAnchor: state.connecting.fromAnchor,
+                    toNodeId: toNodeId,
+                    toAnchor: toAnchorPos,
+                    text: '',
+                    style: 'orthogonal',
+                    color: '#475569',
+                    width: 2,
+                    dash: 'none'
+                };
+                page.connections.push(newConn);
+                selectItem('connection', newConn.id);
+                renderCanvas();
+                saveHistoryState();
             }
 
             state.connecting.active = false;
