@@ -1533,34 +1533,34 @@
                 shape.setAttribute('width', sn.w); shape.setAttribute('height', sn.h);
                 shape.setAttribute('rx', sn.h / 2); shape.setAttribute('ry', sn.h / 2);
                 shape.setAttribute('fill', sn.bg || '#ffffff');
-                shape.setAttribute('stroke', isSel ? '#4f46e5' : (sn.border || '#4f46e5'));
+                shape.setAttribute('stroke', isSel ? '#4f46e5' : (sn.borderColor || sn.border || '#0284c7'));
                 shape.setAttribute('stroke-width', isSel ? '3' : '2');
             } else if (sn.type === 'decision') {
                 shape = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
                 shape.setAttribute('points', `${sn.w/2},0 ${sn.w},${sn.h/2} ${sn.w/2},${sn.h} 0,${sn.h/2}`);
                 shape.setAttribute('fill', sn.bg || '#ffffff');
-                shape.setAttribute('stroke', isSel ? '#4f46e5' : (sn.border || '#4f46e5'));
+                shape.setAttribute('stroke', isSel ? '#4f46e5' : (sn.borderColor || sn.border || '#0284c7'));
                 shape.setAttribute('stroke-width', isSel ? '3' : '2');
             } else if (sn.type === 'inputoutput') {
                 shape = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
                 const off = sn.w * 0.15;
                 shape.setAttribute('points', `${off},0 ${sn.w},0 ${sn.w - off},${sn.h} 0,${sn.h}`);
                 shape.setAttribute('fill', sn.bg || '#ffffff');
-                shape.setAttribute('stroke', isSel ? '#4f46e5' : (sn.border || '#4f46e5'));
+                shape.setAttribute('stroke', isSel ? '#4f46e5' : (sn.borderColor || sn.border || '#0284c7'));
                 shape.setAttribute('stroke-width', isSel ? '3' : '2');
             } else if (sn.type === 'document') {
                 shape = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                 const wH = sn.h * 0.85;
                 shape.setAttribute('d', `M 0,0 L ${sn.w},0 L ${sn.w},${wH} Q ${sn.w * 0.75},${sn.h * 1.1} ${sn.w * 0.5},${wH} T 0,${wH} Z`);
                 shape.setAttribute('fill', sn.bg || '#ffffff');
-                shape.setAttribute('stroke', isSel ? '#4f46e5' : (sn.border || '#4f46e5'));
+                shape.setAttribute('stroke', isSel ? '#4f46e5' : (sn.borderColor || sn.border || '#0284c7'));
                 shape.setAttribute('stroke-width', isSel ? '3' : '2');
             } else {
                 shape = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
                 shape.setAttribute('width', sn.w); shape.setAttribute('height', sn.h);
                 shape.setAttribute('rx', 6);
                 shape.setAttribute('fill', sn.bg || '#ffffff');
-                shape.setAttribute('stroke', isSel ? '#4f46e5' : (sn.border || '#4f46e5'));
+                shape.setAttribute('stroke', isSel ? '#4f46e5' : (sn.borderColor || sn.border || '#0284c7'));
                 shape.setAttribute('stroke-width', isSel ? '3' : '2');
             }
 
@@ -1846,6 +1846,24 @@
         if (btnToggleFlowModal) {
             btnToggleFlowModal.addEventListener('click', toggleLineFlowAnimation);
         }
+
+        document.querySelectorAll('.subflow-swatch-btn').forEach(btn => {
+            btn.onclick = (e) => {
+                e.stopPropagation();
+                const node = activeSubflowCurrentNode || (subflowModalStack.length > 0 ? subflowModalStack[subflowModalStack.length - 1] : null);
+                if (!node || !selectedSubNodeId) {
+                    alert('⚠️ กรุณาคลิกเลือกกล่องย่อยในผังก่อนคลิกเปลี่ยนสีครับ');
+                    return;
+                }
+                const subNode = node.details?.subNodes?.find(s => s.id === selectedSubNodeId);
+                if (subNode) {
+                    subNode.bg = btn.getAttribute('data-bg');
+                    subNode.borderColor = btn.getAttribute('data-border');
+                    renderLargeSubFlowchartSVG(node);
+                    saveHistoryState();
+                }
+            };
+        });
 
         if (btnConnectSub) {
             btnConnectSub.addEventListener('click', () => {
