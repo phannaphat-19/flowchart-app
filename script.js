@@ -84,26 +84,6 @@
             zoomControls.appendChild(gridBtn);
         }
 
-        let modalGridBtn = getElem('btn-modal-toggle-grid');
-        let modalGridText = getElem('modal-grid-status-text');
-        const subflowZoomControls = document.querySelector('.subflow-zoom-controls');
-
-        // Dynamic Injection Safeguard for Modal Grid Button
-        if (!modalGridBtn && subflowZoomControls) {
-            modalGridBtn = document.createElement('button');
-            modalGridBtn.id = 'btn-modal-toggle-grid';
-            modalGridBtn.className = 'btn-subtool-sm';
-            modalGridBtn.title = 'ปิด/เปิด ตารางกริดพื้นหลัง (Toggle Grid)';
-            modalGridBtn.innerHTML = '🔲 <span id="modal-grid-status-text">ตาราง: เปิด</span>';
-            modalGridBtn.addEventListener('click', () => {
-                showCanvasGrid = !showCanvasGrid;
-                localStorage.setItem('flowstudio_show_grid', showCanvasGrid);
-                updateGridDisplay();
-            });
-            subflowZoomControls.appendChild(modalGridBtn);
-            modalGridText = getElem('modal-grid-status-text');
-        }
-
         if (svgGrid) {
             svgGrid.style.display = showCanvasGrid ? 'block' : 'none';
         }
@@ -197,8 +177,8 @@
 
     // --- INITIALIZATION ---
     function init() {
-        // Dynamic DOM Purge for Right Inspector Subflow elements
-        ['btn-open-drawer', 'btn-open-inspector-subflow', 'node-link-page-group', 'modal-shared-flow-group'].forEach(id => {
+        // Dynamic DOM Purge for Right Inspector Subflow and Modal elements
+        ['btn-open-drawer', 'btn-open-inspector-subflow', 'node-link-page-group', 'modal-shared-flow-group', 'btn-modal-toggle-grid', 'subnode-customizer-bar'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.remove();
         });
