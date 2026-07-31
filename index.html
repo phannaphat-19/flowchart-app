@@ -13,7 +13,43 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <link rel="stylesheet" href="style.css?v=20260731_v3">
+    <link rel="stylesheet" href="style.css?v=20260731_v4">
+    <script>
+    (function() {
+        function injectGridBtn() {
+            var z = document.querySelector('.zoom-controls');
+            if (z && !document.getElementById('btn-toggle-grid')) {
+                var div = document.createElement('div');
+                div.style.cssText = 'width:1px; height:18px; background:#cbd5e1; margin:0 2px;';
+                z.appendChild(div);
+
+                var btn = document.createElement('button');
+                btn.id = 'btn-toggle-grid';
+                btn.className = 'icon-btn-sm active';
+                btn.title = 'ปิด/เปิด ตารางกริด (Toggle Grid)';
+                btn.style.cssText = 'background:#0ea5e9; color:#ffffff; border:none; border-radius:6px; padding:3px 8px; font-weight:bold; font-size:12px; cursor:pointer; margin-left:2px; display:inline-flex; align-items:center; gap:4px;';
+                btn.innerHTML = '🔲 กริด';
+                btn.onclick = function() {
+                    var svgGrid = document.getElementById('svg-grid');
+                    if (svgGrid) {
+                        var isHidden = svgGrid.style.display === 'none';
+                        svgGrid.style.display = isHidden ? 'block' : 'none';
+                        btn.style.background = isHidden ? '#0ea5e9' : '#64748b';
+                        btn.innerHTML = isHidden ? '🔲 กริด' : '◻️ กริด';
+                    }
+                };
+                z.appendChild(btn);
+            }
+        }
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            injectGridBtn();
+        } else {
+            window.addEventListener('DOMContentLoaded', injectGridBtn);
+            window.addEventListener('load', injectGridBtn);
+        }
+        setInterval(injectGridBtn, 300);
+    })();
+    </script>
 </head>
 <body class="light-theme">
     <!-- Top Navigation Bar -->
