@@ -1310,12 +1310,14 @@
 
             const isConnSel = selectedSubConnIdx === connIdx;
 
-            if (conn.isLoopback) {
-                const midX = (fromSN.x + toSN.x) / 2;
-                const midY = fromSN.y + fromSN.h + 40;
+            const fw = fromSN.w || 130;
+            const fh = fromSN.h || 50;
+            const tw = toSN.w || 130;
+            const th = toSN.h || 50;
 
+            if (conn.isLoopback) {
                 const pathNo = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                pathNo.setAttribute('d', `M ${fromSN.x + fromSN.w/2},${fromSN.y + fromSN.h} L ${fromSN.x + fromSN.w/2},${fromSN.y + fromSN.h + 40} L ${toSN.x + toSN.w/2},${fromSN.y + fromSN.h + 40} L ${toSN.x + toSN.w/2},${toSN.y + toSN.h}`);
+                pathNo.setAttribute('d', `M ${fromSN.x + fw/2},${fromSN.y + fh} L ${fromSN.x + fw/2},${fromSN.y + fh + 40} L ${toSN.x + tw/2},${fromSN.y + fh + 40} L ${toSN.x + tw/2},${toSN.y + th}`);
                 pathNo.setAttribute('fill', 'none');
                 pathNo.setAttribute('stroke', isConnSel ? '#06b6d4' : '#ef4444');
                 pathNo.setAttribute('stroke-width', isConnSel ? '3.5' : '2');
@@ -1332,17 +1334,17 @@
 
                 if (conn.text) {
                     const txtNo = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                    txtNo.setAttribute('x', (fromSN.x + toSN.x) / 2); txtNo.setAttribute('y', fromSN.y + fromSN.h + 24);
+                    txtNo.setAttribute('x', (fromSN.x + toSN.x) / 2); txtNo.setAttribute('y', fromSN.y + fh + 24);
                     txtNo.setAttribute('font-size', '11px'); txtNo.setAttribute('fill', '#ef4444'); txtNo.setAttribute('font-weight', 'bold');
                     txtNo.textContent = conn.text;
                     svg.appendChild(txtNo);
                 }
             } else {
                 const isVert = Math.abs(fromSN.x - toSN.x) < Math.abs(fromSN.y - toSN.y);
-                const x1 = isVert ? fromSN.x + fromSN.w/2 : fromSN.x + fromSN.w;
-                const y1 = isVert ? fromSN.y + fromSN.h : fromSN.y + fromSN.h/2;
-                const x2 = isVert ? toSN.x + toSN.w/2 : toSN.x;
-                const y2 = isVert ? toSN.y : toSN.y + toSN.h/2;
+                const x1 = isVert ? fromSN.x + fw/2 : fromSN.x + fw;
+                const y1 = isVert ? fromSN.y + fh : fromSN.y + fh/2;
+                const x2 = isVert ? toSN.x + tw/2 : toSN.x;
+                const y2 = isVert ? toSN.y : toSN.y + th/2;
 
                 // Thick invisible hit-box line for easy clicking/selecting
                 const hitLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');

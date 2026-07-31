@@ -1685,12 +1685,15 @@ input[type="color"] {
     r: 6;
 }
 
-/* Connection Paths */
 #group-connections path,
 #temp-connection,
 .flow-connection,
 .issue-link-group path {
     fill: none !important;
+}
+
+#temp-connection {
+    pointer-events: none !important;
 }
 
 .flow-connection {
