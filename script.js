@@ -2375,8 +2375,21 @@
             renderNodeSVG(node, groupSwimlanes || groupNodes);
         });
 
+        const pairCounts = {};
+        const pairIndexes = {};
+
+        page.connections.forEach(c => {
+            const key = [c.fromNodeId, c.toNodeId].sort().join('::');
+            pairCounts[key] = (pairCounts[key] || 0) + 1;
+        });
+
         page.connections.forEach(conn => {
-            renderConnectionSVG(conn);
+            const key = [conn.fromNodeId, conn.toNodeId].sort().join('::');
+            const totalInPair = pairCounts[key] || 1;
+            const idxInPair = pairIndexes[key] || 0;
+            pairIndexes[key] = idxInPair + 1;
+
+            renderConnectionSVG(conn, idxInPair, totalInPair);
         });
 
         renderIssueLinkLines();
@@ -2697,15 +2710,34 @@
         };
     }
 
-    function renderConnectionSVG(conn) {
+    function renderConnectionSVG(conn, idxInPair = 0, totalInPair = 1) {
         const page = getCurrentPage();
         const fromNode = page.nodes.find(n => n.id === conn.fromNodeId);
         const toNode = page.nodes.find(n => n.id === conn.toNodeId);
 
         if (!fromNode || !toNode) return;
 
-        const fromPos = getAnchorPositions(fromNode)[conn.fromAnchor || 'right'];
-        const toPos = getAnchorPositions(toNode)[conn.toAnchor || 'left'];
+        let fromPos = { ...getAnchorPositions(fromNode)[conn.fromAnchor || 'right'] };
+        let toPos = { ...getAnchorPositions(toNode)[conn.toAnchor || 'left'] };
+
+        if (totalInPair > 1) {
+            const step = 20;
+            const offsetPx = (idxInPair - (totalInPair - 1) / 2) * step;
+            const fromAnchor = conn.fromAnchor || 'right';
+            const toAnchor = conn.toAnchor || 'left';
+
+            if (fromAnchor === 'top' || fromAnchor === 'bottom') {
+                fromPos.x += offsetPx;
+            } else {
+                fromPos.y += offsetPx;
+            }
+
+            if (toAnchor === 'top' || toAnchor === 'bottom') {
+                toPos.x += offsetPx;
+            } else {
+                toPos.y += offsetPx;
+            }
+        }
 
         const isSelected = state.selectedItem && state.selectedItem.type === 'connection' && state.selectedItem.id === conn.id;
 
