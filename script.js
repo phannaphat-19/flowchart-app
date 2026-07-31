@@ -59,10 +59,47 @@
 
     function updateGridDisplay() {
         const svgGrid = getElem('svg-grid');
-        const gridBtn = getElem('btn-toggle-grid');
+        let gridBtn = getElem('btn-toggle-grid');
+        const zoomControls = document.querySelector('.zoom-controls');
 
-        const modalGridBtn = getElem('btn-modal-toggle-grid');
-        const modalGridText = getElem('modal-grid-status-text');
+        // Dynamic Injection Safeguard for Main Canvas Grid Button
+        if (!gridBtn && zoomControls) {
+            const divider = document.createElement('div');
+            divider.style.cssText = 'width:1px; height:18px; background:#cbd5e1; margin:0 2px;';
+            zoomControls.appendChild(divider);
+
+            gridBtn = document.createElement('button');
+            gridBtn.id = 'btn-toggle-grid';
+            gridBtn.className = 'icon-btn-sm active';
+            gridBtn.title = 'ปิด/เปิด ตารางกริดพื้นหลัง (Toggle Canvas Grid)';
+            gridBtn.innerHTML = '<i class="fa-solid fa-border-all"></i>';
+            gridBtn.addEventListener('click', () => {
+                showCanvasGrid = !showCanvasGrid;
+                localStorage.setItem('flowstudio_show_grid', showCanvasGrid);
+                updateGridDisplay();
+            });
+            zoomControls.appendChild(gridBtn);
+        }
+
+        let modalGridBtn = getElem('btn-modal-toggle-grid');
+        let modalGridText = getElem('modal-grid-status-text');
+        const subflowZoomControls = document.querySelector('.subflow-zoom-controls');
+
+        // Dynamic Injection Safeguard for Modal Grid Button
+        if (!modalGridBtn && subflowZoomControls) {
+            modalGridBtn = document.createElement('button');
+            modalGridBtn.id = 'btn-modal-toggle-grid';
+            modalGridBtn.className = 'btn-subtool-sm';
+            modalGridBtn.title = 'ปิด/เปิด ตารางกริดพื้นหลัง (Toggle Grid)';
+            modalGridBtn.innerHTML = '<i class="fa-solid fa-border-all"></i> <span id="modal-grid-status-text">ตาราง: เปิด</span>';
+            modalGridBtn.addEventListener('click', () => {
+                showCanvasGrid = !showCanvasGrid;
+                localStorage.setItem('flowstudio_show_grid', showCanvasGrid);
+                updateGridDisplay();
+            });
+            subflowZoomControls.appendChild(modalGridBtn);
+            modalGridText = getElem('modal-grid-status-text');
+        }
 
         if (svgGrid) {
             svgGrid.style.display = showCanvasGrid ? 'block' : 'none';
