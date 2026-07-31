@@ -60,6 +60,9 @@
     function updateGridDisplay() {
         const svgGrid = getElem('svg-grid');
         let gridBtn = getElem('btn-toggle-grid');
+        const headerGridBtn = getElem('btn-toggle-grid-header');
+        const headerGridText = getElem('grid-header-text');
+
         const zoomControls = document.querySelector('.zoom-controls');
 
         // Dynamic Injection Safeguard for Main Canvas Grid Button
@@ -72,7 +75,7 @@
             gridBtn.id = 'btn-toggle-grid';
             gridBtn.className = 'icon-btn-sm active';
             gridBtn.title = 'ปิด/เปิด ตารางกริดพื้นหลัง (Toggle Canvas Grid)';
-            gridBtn.innerHTML = '<i class="fa-solid fa-border-all"></i>';
+            gridBtn.innerHTML = '🔲';
             gridBtn.addEventListener('click', () => {
                 showCanvasGrid = !showCanvasGrid;
                 localStorage.setItem('flowstudio_show_grid', showCanvasGrid);
@@ -91,7 +94,7 @@
             modalGridBtn.id = 'btn-modal-toggle-grid';
             modalGridBtn.className = 'btn-subtool-sm';
             modalGridBtn.title = 'ปิด/เปิด ตารางกริดพื้นหลัง (Toggle Grid)';
-            modalGridBtn.innerHTML = '<i class="fa-solid fa-border-all"></i> <span id="modal-grid-status-text">ตาราง: เปิด</span>';
+            modalGridBtn.innerHTML = '🔲 <span id="modal-grid-status-text">ตาราง: เปิด</span>';
             modalGridBtn.addEventListener('click', () => {
                 showCanvasGrid = !showCanvasGrid;
                 localStorage.setItem('flowstudio_show_grid', showCanvasGrid);
@@ -104,15 +107,26 @@
         if (svgGrid) {
             svgGrid.style.display = showCanvasGrid ? 'block' : 'none';
         }
+        if (headerGridBtn && headerGridText) {
+            if (showCanvasGrid) {
+                headerGridBtn.style.background = 'linear-gradient(135deg, #0ea5e9, #0284c7)';
+                headerGridText.textContent = 'ตารางกริด: เปิด';
+            } else {
+                headerGridBtn.style.background = '#64748b';
+                headerGridText.textContent = 'ตารางกริด: ปิด';
+            }
+        }
         if (gridBtn) {
             if (showCanvasGrid) {
                 gridBtn.classList.add('active');
                 gridBtn.style.color = '#0284c7';
                 gridBtn.title = 'คลิกเพื่อซ่อนตารางกริดพื้นหลัง (Hide Background Grid)';
+                gridBtn.textContent = '🔲';
             } else {
                 gridBtn.classList.remove('active');
                 gridBtn.style.color = '#94a3b8';
                 gridBtn.title = 'คลิกเพื่อแสดงตารางกริดพื้นหลัง (Show Background Grid)';
+                gridBtn.textContent = '◻️';
             }
         }
         if (modalGridBtn && modalGridText) {
@@ -3465,6 +3479,15 @@
                     renderInspector();
                     saveHistoryState();
                 }
+            });
+        }
+
+        const btnToggleGridHeader = getElem('btn-toggle-grid-header');
+        if (btnToggleGridHeader) {
+            btnToggleGridHeader.addEventListener('click', () => {
+                showCanvasGrid = !showCanvasGrid;
+                localStorage.setItem('flowstudio_show_grid', showCanvasGrid);
+                updateGridDisplay();
             });
         }
 
