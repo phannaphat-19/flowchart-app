@@ -1618,89 +1618,99 @@
 
         if (btnAddProc) {
             btnAddProc.addEventListener('click', () => {
-                if (!activeSubflowCurrentNode) return;
-                if (!activeSubflowCurrentNode.details) activeSubflowCurrentNode.details = { subNodes: [], subConns: [] };
-                if (!activeSubflowCurrentNode.details.subNodes) activeSubflowCurrentNode.details.subNodes = [];
+                const node = activeSubflowCurrentNode || (subflowModalStack.length > 0 ? subflowModalStack[subflowModalStack.length - 1] : null);
+                if (!node) return;
+                if (!node.details) node.details = { desc: '', steps: '', owner: '', docs: '', issues: [], subNodes: [], subConns: [] };
+                if (!node.details.subNodes) node.details.subNodes = [];
                 
                 const newId = `sub-${Date.now()}`;
-                activeSubflowCurrentNode.details.subNodes.push({
+                node.details.subNodes.push({
                     id: newId,
                     type: 'process',
                     text: 'ขั้นตอนย่อยใหม่',
-                    x: 60 + Math.random() * 200,
-                    y: 60 + Math.random() * 150,
+                    x: 60 + Math.random() * 180,
+                    y: 60 + Math.random() * 120,
+                    w: 130,
+                    h: 50,
                     bg: '#ffffff',
                     borderColor: '#0284c7'
                 });
                 selectedSubNodeId = newId;
-                renderLargeSubFlowchartSVG(activeSubflowCurrentNode);
+                renderLargeSubFlowchartSVG(node);
                 saveHistoryState();
             });
         }
 
         if (btnAddDec) {
             btnAddDec.addEventListener('click', () => {
-                if (!activeSubflowCurrentNode) return;
-                if (!activeSubflowCurrentNode.details) activeSubflowCurrentNode.details = { subNodes: [], subConns: [] };
-                if (!activeSubflowCurrentNode.details.subNodes) activeSubflowCurrentNode.details.subNodes = [];
+                const node = activeSubflowCurrentNode || (subflowModalStack.length > 0 ? subflowModalStack[subflowModalStack.length - 1] : null);
+                if (!node) return;
+                if (!node.details) node.details = { desc: '', steps: '', owner: '', docs: '', issues: [], subNodes: [], subConns: [] };
+                if (!node.details.subNodes) node.details.subNodes = [];
 
                 const newId = `sub-${Date.now()}`;
-                activeSubflowCurrentNode.details.subNodes.push({
+                node.details.subNodes.push({
                     id: newId,
                     type: 'decision',
                     text: 'เงื่อนไขใหม่?',
-                    x: 80 + Math.random() * 200,
-                    y: 80 + Math.random() * 150,
+                    x: 80 + Math.random() * 180,
+                    y: 80 + Math.random() * 120,
+                    w: 130,
+                    h: 55,
                     bg: '#ffffff',
                     borderColor: '#f59e0b'
                 });
                 selectedSubNodeId = newId;
-                renderLargeSubFlowchartSVG(activeSubflowCurrentNode);
+                renderLargeSubFlowchartSVG(node);
                 saveHistoryState();
             });
         }
 
         if (btnAddIssueRed) {
             btnAddIssueRed.addEventListener('click', () => {
-                if (!activeSubflowCurrentNode) return;
-                if (!activeSubflowCurrentNode.details) activeSubflowCurrentNode.details = { subNodes: [], subConns: [] };
-                if (!activeSubflowCurrentNode.details.subNodes) activeSubflowCurrentNode.details.subNodes = [];
+                const node = activeSubflowCurrentNode || (subflowModalStack.length > 0 ? subflowModalStack[subflowModalStack.length - 1] : null);
+                if (!node) return;
+                if (!node.details) node.details = { desc: '', steps: '', owner: '', docs: '', issues: [], subNodes: [], subConns: [] };
+                if (!node.details.subNodes) node.details.subNodes = [];
 
                 const newId = `sub-${Date.now()}`;
-                activeSubflowCurrentNode.details.subNodes.push({
+                node.details.subNodes.push({
                     id: newId,
                     type: 'issue-red',
-                    text: '🚩 รายงานปัญหาสำคัญ',
-                    x: 100 + Math.random() * 200,
-                    y: 100 + Math.random() * 150,
+                    text: '🚩 ระบุปัญหา Red Flag',
+                    x: 100 + Math.random() * 180,
+                    y: 100 + Math.random() * 120,
+                    w: 180,
+                    h: 60,
                     bg: '#fef2f2',
                     borderColor: '#ef4444'
                 });
                 selectedSubNodeId = newId;
-                renderLargeSubFlowchartSVG(activeSubflowCurrentNode);
+                renderLargeSubFlowchartSVG(node);
                 saveHistoryState();
             });
         }
 
         if (btnDelSub) {
             btnDelSub.addEventListener('click', () => {
-                if (!activeSubflowCurrentNode) return;
+                const node = activeSubflowCurrentNode || (subflowModalStack.length > 0 ? subflowModalStack[subflowModalStack.length - 1] : null);
+                if (!node) return;
                 if (selectedSubNodeId) {
-                    if (activeSubflowCurrentNode.details?.subNodes) {
-                        activeSubflowCurrentNode.details.subNodes = activeSubflowCurrentNode.details.subNodes.filter(s => s.id !== selectedSubNodeId);
+                    if (node.details?.subNodes) {
+                        node.details.subNodes = node.details.subNodes.filter(s => s.id !== selectedSubNodeId);
                     }
-                    if (activeSubflowCurrentNode.details?.subConns) {
-                        activeSubflowCurrentNode.details.subConns = activeSubflowCurrentNode.details.subConns.filter(c => c.from !== selectedSubNodeId && c.to !== selectedSubNodeId);
+                    if (node.details?.subConns) {
+                        node.details.subConns = node.details.subConns.filter(c => c.from !== selectedSubNodeId && c.to !== selectedSubNodeId);
                     }
                     selectedSubNodeId = null;
-                    renderLargeSubFlowchartSVG(activeSubflowCurrentNode);
+                    renderLargeSubFlowchartSVG(node);
                     saveHistoryState();
                 } else if (selectedSubConnIdx >= 0) {
-                    if (activeSubflowCurrentNode.details?.subConns) {
-                        activeSubflowCurrentNode.details.subConns.splice(selectedSubConnIdx, 1);
+                    if (node.details?.subConns) {
+                        node.details.subConns.splice(selectedSubConnIdx, 1);
                     }
                     selectedSubConnIdx = -1;
-                    renderLargeSubFlowchartSVG(activeSubflowCurrentNode);
+                    renderLargeSubFlowchartSVG(node);
                     saveHistoryState();
                 } else {
                     alert('⚠️ กรุณาคลิกเลือกกล่องย่อย หรือเส้นเชื่อมที่ต้องการลบก่อนครับ');
@@ -1710,13 +1720,14 @@
 
         if (btnDelConn) {
             btnDelConn.addEventListener('click', () => {
-                if (!activeSubflowCurrentNode) return;
+                const node = activeSubflowCurrentNode || (subflowModalStack.length > 0 ? subflowModalStack[subflowModalStack.length - 1] : null);
+                if (!node) return;
                 if (selectedSubConnIdx >= 0) {
-                    if (activeSubflowCurrentNode.details?.subConns) {
-                        activeSubflowCurrentNode.details.subConns.splice(selectedSubConnIdx, 1);
+                    if (node.details?.subConns) {
+                        node.details.subConns.splice(selectedSubConnIdx, 1);
                     }
                     selectedSubConnIdx = -1;
-                    renderLargeSubFlowchartSVG(activeSubflowCurrentNode);
+                    renderLargeSubFlowchartSVG(node);
                     saveHistoryState();
                 } else {
                     alert('⚠️ กรุณาคลิกเลือกเส้นเชื่อมที่ต้องการลบก่อนครับ');
@@ -1726,6 +1737,7 @@
 
         if (btnConnectSub) {
             btnConnectSub.addEventListener('click', () => {
+                const node = activeSubflowCurrentNode || (subflowModalStack.length > 0 ? subflowModalStack[subflowModalStack.length - 1] : null);
                 subConnectMode = !subConnectMode;
                 subConnFromId = null;
                 if (subConnectMode) {
@@ -1735,7 +1747,7 @@
                     btnConnectSub.style.background = '';
                     btnConnectSub.style.color = '#0284c7';
                 }
-                if (activeSubflowCurrentNode) renderLargeSubFlowchartSVG(activeSubflowCurrentNode);
+                if (node) renderLargeSubFlowchartSVG(node);
             });
         }
 
