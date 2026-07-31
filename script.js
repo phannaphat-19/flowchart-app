@@ -2720,20 +2720,74 @@
                 openSubflowModal(node, true);
             }
         });
+    }
 
-        gElem.addEventListener('click', (e) => {
-            if (state.currentTool === 'connect') {
-                e.stopPropagation();
+    function startConnectionDrag(nodeId, anchorPos, e) {
+        e.stopPropagation();
+        const page = getCurrentPage();
+        const node = page.nodes.find(n => n.id === nodeId);
+        if (!node) return;
+
+        const startClientX = e.clientX;
+        const startClientY = e.clientY;
+
+        const anchorCoord = getAnchorPositions(node)[anchorPos];
+
+        state.connecting = {
+            active: true,
+            fromNodeId: nodeId,
+            fromAnchor: anchorPos,
+            startX: anchorCoord.x,
+            startY: anchorCoord.y
+        };
+
+        const tempConn = getElem('temp-connection');
+
+        const onMouseMove = (moveEvent) => {
+            if (!state.connecting.active) return;
+
+            const totalMove = Math.hypot(moveEvent.clientX - startClientX, moveEvent.clientY - startClientY);
+            if (totalMove > 6 && tempConn) {
+                tempConn.style.display = 'block';
+
+                const svg = getElem('flow-svg');
+                if (!svg) return;
+                const rect = svg.getBoundingClientRect();
+                const mouseCanvasX = (moveEvent.clientX - rect.left - state.pan.x) / state.zoom;
+                const mouseCanvasY = (moveEvent.clientY - rect.top - state.pan.y) / state.zoom;
+
+                const d = calculatePathD(
+                    { x: state.connecting.startX, y: state.connecting.startY },
+                    { x: mouseCanvasX, y: mouseCanvasY },
+                    'orthogonal',
+                    state.connecting.fromAnchor,
+                    'left'
+                );
+                tempConn.setAttribute('d', d);
+            }
+        };
+
+        const onMouseUp = (upEvent) => {
+            if (tempConn) tempConn.style.display = 'none';
+            window.removeEventListener('mousemove', onMouseMove);
+            window.removeEventListener('mouseup', onMouseUp);
+
+            if (!state.connecting.active) return;
+            state.connecting.active = false;
+
+            const totalDragDist = Math.hypot(upEvent.clientX - startClientX, upEvent.clientY - startClientY);
+
+            // Handle Click-to-Connect (movement < 8px)
+            if (totalDragDist < 8) {
                 if (!state.firstConnectNodeId) {
-                    state.firstConnectNodeId = node.id;
-                    selectItem('node', node.id, false);
-                } else if (state.firstConnectNodeId !== node.id) {
-                    const page = getCurrentPage();
+                    state.firstConnectNodeId = nodeId;
+                    selectItem('node', nodeId, false);
+                } else if (state.firstConnectNodeId !== nodeId) {
                     const newConn = {
                         id: `conn-${Date.now()}`,
                         fromNodeId: state.firstConnectNodeId,
                         fromAnchor: 'right',
-                        toNodeId: node.id,
+                        toNodeId: nodeId,
                         toAnchor: 'left',
                         text: '',
                         style: 'orthogonal',
@@ -2749,55 +2803,10 @@
                 } else {
                     state.firstConnectNodeId = null;
                 }
+                return;
             }
-        });
-    }
 
-    function startConnectionDrag(nodeId, anchorPos, e) {
-        e.stopPropagation();
-        const page = getCurrentPage();
-        const node = page.nodes.find(n => n.id === nodeId);
-        if (!node) return;
-
-        const anchorCoord = getAnchorPositions(node)[anchorPos];
-
-        state.connecting = {
-            active: true,
-            fromNodeId: nodeId,
-            fromAnchor: anchorPos,
-            startX: anchorCoord.x,
-            startY: anchorCoord.y
-        };
-
-        const tempConn = getElem('temp-connection');
-        if (tempConn) tempConn.style.display = 'block';
-
-        const onMouseMove = (moveEvent) => {
-            if (!state.connecting.active) return;
-
-            const svg = getElem('flow-svg');
-            if (!svg) return;
-            const rect = svg.getBoundingClientRect();
-            const mouseCanvasX = (moveEvent.clientX - rect.left - state.pan.x) / state.zoom;
-            const mouseCanvasY = (moveEvent.clientY - rect.top - state.pan.y) / state.zoom;
-
-            const d = calculatePathD(
-                { x: state.connecting.startX, y: state.connecting.startY },
-                { x: mouseCanvasX, y: mouseCanvasY },
-                'orthogonal',
-                state.connecting.fromAnchor,
-                'left'
-            );
-            if (tempConn) tempConn.setAttribute('d', d);
-        };
-
-        const onMouseUp = (upEvent) => {
-            if (tempConn) tempConn.style.display = 'none';
-            window.removeEventListener('mousemove', onMouseMove);
-            window.removeEventListener('mouseup', onMouseUp);
-
-            if (!state.connecting.active) return;
-
+            // Handle Drag-to-Connect (movement >= 8px)
             let hitElem = document.elementFromPoint(upEvent.clientX, upEvent.clientY);
             let toNodeId = null;
             let toAnchorPos = 'top';
@@ -2816,11 +2825,11 @@
                 }
             }
 
-            if (toNodeId && toNodeId !== state.connecting.fromNodeId) {
+            if (toNodeId && toNodeId !== nodeId) {
                 const newConn = {
                     id: `conn-${Date.now()}`,
-                    fromNodeId: state.connecting.fromNodeId,
-                    fromAnchor: state.connecting.fromAnchor,
+                    fromNodeId: nodeId,
+                    fromAnchor: anchorPos,
                     toNodeId: toNodeId,
                     toAnchor: toAnchorPos,
                     text: '',
@@ -2834,8 +2843,6 @@
                 renderCanvas();
                 saveHistoryState();
             }
-
-            state.connecting.active = false;
         };
 
         window.addEventListener('mousemove', onMouseMove);
