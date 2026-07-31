@@ -1154,11 +1154,8 @@
                 if (targetId && node && selectedSubNodeId) {
                     if (!node.details) node.details = { desc: '', steps: '', owner: '', docs: '', issues: [], subNodes: [], subConns: [] };
                     if (!node.details.subConns) node.details.subConns = [];
-                    const exists = node.details.subConns.some(c => c.from === selectedSubNodeId && c.to === targetId);
-                    if (!exists) {
-                        node.details.subConns.push({ from: selectedSubNodeId, to: targetId, text: '' });
-                        saveHistoryState();
-                    }
+                    node.details.subConns.push({ from: selectedSubNodeId, to: targetId, text: '' });
+                    saveHistoryState();
                     connectSelect.value = '';
                     renderLargeSubFlowchartSVG(node);
                 }
@@ -1231,6 +1228,48 @@
     let subConnFromId = null;      // id ของกล่องต้นทาง
     let selectedSubConnIdx = -1;   // index ของเส้นที่เลือกอยู่
 
+    function calculateSubPathD(fromSN, toSN, connIndexInPair = 0, totalConnsInPair = 1) {
+        const fw = fromSN.w || 130;
+        const fh = fromSN.h || 50;
+        const tw = toSN.w || 130;
+        const th = toSN.h || 50;
+
+        const fromCenter = { x: fromSN.x + fw / 2, y: fromSN.y + fh / 2 };
+        const toCenter = { x: toSN.x + tw / 2, y: toSN.y + th / 2 };
+
+        const dx = toCenter.x - fromCenter.x;
+        const dy = toCenter.y - fromCenter.y;
+
+        const step = 20;
+        const offsetPx = (connIndexInPair - (totalConnsInPair - 1) / 2) * step;
+
+        let startPt, endPt, dPath;
+
+        if (Math.abs(dx) >= Math.abs(dy)) {
+            if (dx > 0) {
+                startPt = { x: fromSN.x + fw, y: fromSN.y + fh / 2 + offsetPx };
+                endPt = { x: toSN.x, y: toSN.y + th / 2 + offsetPx };
+            } else {
+                startPt = { x: fromSN.x, y: fromSN.y + fh / 2 + offsetPx };
+                endPt = { x: toSN.x + tw, y: toSN.y + th / 2 + offsetPx };
+            }
+            const midX = (startPt.x + endPt.x) / 2;
+            dPath = `M ${startPt.x},${startPt.y} H ${midX} V ${endPt.y} H ${endPt.x}`;
+        } else {
+            if (dy > 0) {
+                startPt = { x: fromSN.x + fw / 2 + offsetPx, y: fromSN.y + fh };
+                endPt = { x: toSN.x + tw / 2 + offsetPx, y: toSN.y };
+            } else {
+                startPt = { x: fromSN.x + fw / 2 + offsetPx, y: fromSN.y };
+                endPt = { x: toSN.x + tw / 2 + offsetPx, y: toSN.y + th };
+            }
+            const midY = (startPt.y + endPt.y) / 2;
+            dPath = `M ${startPt.x},${startPt.y} V ${midY} H ${endPt.x} V ${endPt.y}`;
+        }
+
+        return { d: dPath, startPt, endPt };
+    }
+
     function renderLargeSubFlowchartSVG(node) {
         const svg = getElem('large-subflow-svg');
         if (!svg) return;
@@ -1301,8 +1340,19 @@
             svg.appendChild(gridRect);
         }
 
+        // Count parallel connections between pairs for offset calculation
+        const subConnsList = node.details.subConns || [];
+        const pairCounts = {};
+        const pairIndexes = {};
+
+        subConnsList.forEach(c => {
+            if (c.isLoopback) return;
+            const pairKey = [c.from, c.to].sort().join('::');
+            pairCounts[pairKey] = (pairCounts[pairKey] || 0) + 1;
+        });
+
         // Render Connections
-        (node.details.subConns || []).forEach((conn, connIdx) => {
+        subConnsList.forEach((conn, connIdx) => {
             const fromSN = node.details.subNodes.find(sn => sn.id === conn.from);
             const toSN = node.details.subNodes.find(sn => sn.id === conn.to);
             if (!fromSN || !toSN) return;
@@ -1339,46 +1389,50 @@
                     svg.appendChild(txtNo);
                 }
             } else {
-                const isVert = Math.abs(fromSN.x - toSN.x) < Math.abs(fromSN.y - toSN.y);
-                const x1 = isVert ? fromSN.x + fw/2 : fromSN.x + fw;
-                const y1 = isVert ? fromSN.y + fh : fromSN.y + fh/2;
-                const x2 = isVert ? toSN.x + tw/2 : toSN.x;
-                const y2 = isVert ? toSN.y : toSN.y + th/2;
+                const pairKey = [conn.from, conn.to].sort().join('::');
+                const totalInPair = pairCounts[pairKey] || 1;
+                const idxInPair = pairIndexes[pairKey] || 0;
+                pairIndexes[pairKey] = idxInPair + 1;
 
-                // Thick invisible hit-box line for easy clicking/selecting
-                const hitLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                hitLine.setAttribute('x1', x1); hitLine.setAttribute('y1', y1);
-                hitLine.setAttribute('x2', x2); hitLine.setAttribute('y2', y2);
-                hitLine.setAttribute('stroke', 'transparent');
-                hitLine.setAttribute('stroke-width', '24');
-                hitLine.style.cursor = 'pointer';
-                hitLine.addEventListener('click', (e) => {
+                const route = calculateSubPathD(fromSN, toSN, idxInPair, totalInPair);
+
+                // Thick invisible hit-box path for easy clicking/selecting
+                const hitPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                hitPath.setAttribute('d', route.d);
+                hitPath.setAttribute('fill', 'none');
+                hitPath.setAttribute('stroke', 'transparent');
+                hitPath.setAttribute('stroke-width', '24');
+                hitPath.style.cursor = 'pointer';
+                hitPath.addEventListener('click', (e) => {
                     e.stopPropagation();
                     selectedSubConnIdx = connIdx;
                     selectedSubNodeId = null;
                     renderLargeSubFlowchartSVG(node);
                 });
-                svg.appendChild(hitLine);
+                svg.appendChild(hitPath);
 
-                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                line.setAttribute('x1', x1); line.setAttribute('y1', y1);
-                line.setAttribute('x2', x2); line.setAttribute('y2', y2);
-                line.setAttribute('stroke', isConnSel ? '#06b6d4' : '#4f46e5');
-                line.setAttribute('stroke-width', isConnSel ? '3.5' : '2');
-                line.setAttribute('marker-end', 'url(#large-sub-arrow)');
-                line.style.cursor = 'pointer';
-                line.addEventListener('click', (e) => {
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('d', route.d);
+                path.setAttribute('fill', 'none');
+                path.setAttribute('stroke', isConnSel ? '#06b6d4' : '#4f46e5');
+                path.setAttribute('stroke-width', isConnSel ? '3.5' : '2.2');
+                path.setAttribute('marker-end', 'url(#large-sub-arrow)');
+                path.style.cursor = 'pointer';
+                path.addEventListener('click', (e) => {
                     e.stopPropagation();
                     selectedSubConnIdx = connIdx;
                     selectedSubNodeId = null;
                     renderLargeSubFlowchartSVG(node);
                 });
-                svg.appendChild(line);
+                svg.appendChild(path);
 
                 if (conn.text) {
                     const txtYes = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                    txtYes.setAttribute('x', (x1 + x2) / 2 + 12); txtYes.setAttribute('y', (y1 + y2) / 2 - 12);
-                    txtYes.setAttribute('font-size', '11px'); txtYes.setAttribute('fill', '#10b981'); txtYes.setAttribute('font-weight', 'bold');
+                    txtYes.setAttribute('x', (route.startPt.x + route.endPt.x) / 2 + 10);
+                    txtYes.setAttribute('y', (route.startPt.y + route.endPt.y) / 2 - 10);
+                    txtYes.setAttribute('font-size', '11px');
+                    txtYes.setAttribute('fill', '#10b981');
+                    txtYes.setAttribute('font-weight', 'bold');
                     txtYes.textContent = conn.text;
                     svg.appendChild(txtYes);
                 }
