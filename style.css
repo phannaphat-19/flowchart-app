@@ -124,10 +124,49 @@ body {
     z-index: 100;
 }
 
-.header-left, .header-right {
+.header-left {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.header-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    flex: 1;
+    flex-shrink: 1;
+    overflow: hidden;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+#project-title {
+    font-size: 0.92rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    border: 1px transparent dashed;
+    color: var(--text-main);
+    outline: none;
+    max-width: 240px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition: border 0.2s, background 0.2s;
+    cursor: text;
+}
+
+#project-title:hover, #project-title:focus {
+    border-color: var(--primary);
+    background: rgba(255, 255, 255, 0.9);
 }
 
 .logo {
