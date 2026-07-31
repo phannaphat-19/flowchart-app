@@ -2720,6 +2720,37 @@
                 openSubflowModal(node, true);
             }
         });
+
+        gElem.addEventListener('click', (e) => {
+            if (state.currentTool === 'connect') {
+                e.stopPropagation();
+                if (!state.firstConnectNodeId) {
+                    state.firstConnectNodeId = node.id;
+                    selectItem('node', node.id, false);
+                } else if (state.firstConnectNodeId !== node.id) {
+                    const page = getCurrentPage();
+                    const newConn = {
+                        id: `conn-${Date.now()}`,
+                        fromNodeId: state.firstConnectNodeId,
+                        fromAnchor: 'right',
+                        toNodeId: node.id,
+                        toAnchor: 'left',
+                        text: '',
+                        style: 'orthogonal',
+                        color: '#475569',
+                        width: 2,
+                        dash: 'none'
+                    };
+                    page.connections.push(newConn);
+                    selectItem('connection', newConn.id);
+                    state.firstConnectNodeId = null;
+                    renderCanvas();
+                    saveHistoryState();
+                } else {
+                    state.firstConnectNodeId = null;
+                }
+            }
+        });
     }
 
     function startConnectionDrag(nodeId, anchorPos, e) {
@@ -3322,6 +3353,7 @@
 
     function setTool(toolName) {
         state.currentTool = toolName;
+        state.firstConnectNodeId = null;
         const toolSelect = getElem('tool-select');
         const toolConnect = getElem('tool-connect');
         const toolPan = getElem('tool-pan');
@@ -3330,7 +3362,7 @@
         if (toolSelect) toolSelect.classList.toggle('active', toolName === 'select');
         if (toolConnect) toolConnect.classList.toggle('active', toolName === 'connect');
         if (toolPan) toolPan.classList.toggle('active', toolName === 'pan');
-        if (canvasViewport) canvasViewport.style.cursor = toolName === 'pan' ? 'grab' : 'default';
+        if (canvasViewport) canvasViewport.style.cursor = toolName === 'pan' ? 'grab' : (toolName === 'connect' ? 'crosshair' : 'default');
     }
 
     function setZoom(newZoom) {
