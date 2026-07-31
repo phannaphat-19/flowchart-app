@@ -759,7 +759,8 @@
                 // 1. Handle Standalone Draggable Issue Cards on Main Canvas
                 if (node.type === 'issue-red' || node.type === 'issue-yellow' || node.type === 'issue-green') {
                     const flagType = node.type === 'issue-red' ? 'red' : node.type === 'issue-yellow' ? 'yellow' : 'green';
-                    const issueKey = `${node.id}::${flagType}::${(node.text || '').trim()}`;
+                    const issueText = node.text || 'การ์ดปัญหา';
+                    const issueKey = `${page.id || 'p0'}:::${flagType}:::${issueText.trim().toLowerCase()}`;
                     if (!seenKeys.has(issueKey)) {
                         seenKeys.add(issueKey);
                         totalCount++;
@@ -777,7 +778,7 @@
                                 <td><span class="flag-badge-pill ${flagBadgeClass}">${flagBadgeText}</span></td>
                                 <td><strong>📌 การ์ดปัญหาบนผัง</strong><br><small style="color:var(--text-muted);">${page.name} (X:${Math.round(node.x)}, Y:${Math.round(node.y)})</small></td>
                                 <td>${node.details?.owner || 'ไม่ระบุ'}</td>
-                                <td>${node.text ? node.text.replace(/\n/g, ' ') : 'การ์ดปัญหา'}</td>
+                                <td>${issueText.replace(/\n/g, ' ')}</td>
                             `;
                             tbody.appendChild(tr);
                         }
@@ -787,25 +788,27 @@
                 // 2. Handle Issues Attached to Nodes
                 const issues = node.details?.issues || [];
                 issues.forEach(issue => {
-                    const issueKey = issue.id ? issue.id : `${node.id}::${issue.flag}::${(issue.text || '').trim()}`;
+                    const flagType = issue.flag || 'red';
+                    const issueText = issue.text || '';
+                    const issueKey = `${page.id || 'p0'}:::${flagType}:::${issueText.trim().toLowerCase()}`;
                     if (!seenKeys.has(issueKey)) {
                         seenKeys.add(issueKey);
                         totalCount++;
-                        if (issue.flag === 'red') redCount++;
-                        else if (issue.flag === 'yellow') yellowCount++;
-                        else if (issue.flag === 'green') greenCount++;
+                        if (flagType === 'red') redCount++;
+                        else if (flagType === 'yellow') yellowCount++;
+                        else if (flagType === 'green') greenCount++;
 
                         if (tbody) {
                             const tr = document.createElement('tr');
-                            const flagBadgeClass = issue.flag === 'red' ? 'red' : issue.flag === 'yellow' ? 'yellow' : 'green';
-                            const flagBadgeText = issue.flag === 'red' ? '🚩 Red Flag (วิกฤต)' : issue.flag === 'yellow' ? '🚩 Yellow Flag (เฝ้าระวัง)' : '🟩 Green Flag (ผ่าน)';
+                            const flagBadgeClass = flagType === 'red' ? 'red' : flagType === 'yellow' ? 'yellow' : 'green';
+                            const flagBadgeText = flagType === 'red' ? '🚩 Red Flag (วิกฤต)' : flagType === 'yellow' ? '🚩 Yellow Flag (เฝ้าระวัง)' : '🟩 Green Flag (ผ่าน)';
 
                             tr.innerHTML = `
                                 <td>${rowNum++}</td>
                                 <td><span class="flag-badge-pill ${flagBadgeClass}">${flagBadgeText}</span></td>
                                 <td><strong>${node.text ? node.text.replace(/\n/g, ' ') : 'กล่องกระบวนการ'}</strong><br><small style="color:var(--text-muted);">${page.name}</small></td>
                                 <td>${node.details?.owner || 'ไม่ระบุแผนก'}</td>
-                                <td>${issue.text}</td>
+                                <td>${issueText}</td>
                             `;
                             tbody.appendChild(tr);
                         }
@@ -817,7 +820,8 @@
                 subNodes.forEach(sn => {
                     if (sn.type === 'issue-red' || sn.type === 'issue-yellow' || sn.type === 'issue-green') {
                         const flagType = sn.type === 'issue-red' ? 'red' : sn.type === 'issue-yellow' ? 'yellow' : 'green';
-                        const issueKey = sn.linkedIssueId ? sn.linkedIssueId : `${node.id}::${flagType}::${(sn.text || '').trim()}`;
+                        const issueText = sn.text || '';
+                        const issueKey = `${page.id || 'p0'}:::${flagType}:::${issueText.trim().toLowerCase()}`;
                         if (!seenKeys.has(issueKey)) {
                             seenKeys.add(issueKey);
                             totalCount++;
@@ -835,7 +839,7 @@
                                     <td><span class="flag-badge-pill ${flagBadgeClass}">${flagBadgeText}</span></td>
                                     <td><strong>ผังย่อยของ [${node.text ? node.text.replace(/\n/g, ' ') : 'กระบวนการ'}]</strong><br><small style="color:var(--text-muted);">${page.name}</small></td>
                                     <td>${node.details?.owner || 'ไม่ระบุแผนก'}</td>
-                                    <td>${sn.text}</td>
+                                    <td>${issueText}</td>
                                 `;
                                 tbody.appendChild(tr);
                             }
@@ -879,30 +883,31 @@
                 // 1. Main Canvas Issue Cards
                 if (node.type === 'issue-red' || node.type === 'issue-yellow' || node.type === 'issue-green') {
                     const flagType = node.type === 'issue-red' ? 'red' : node.type === 'issue-yellow' ? 'yellow' : 'green';
-                    const issueKey = `${node.id}::${flagType}::${(node.text || '').trim()}`;
+                    const issueText = node.text || 'การ์ดปัญหา';
+                    const issueKey = `${page.id || 'p0'}:::${flagType}:::${issueText.trim().toLowerCase()}`;
                     if (!seenKeys.has(issueKey)) {
                         seenKeys.add(issueKey);
                         const flagName = node.type === 'issue-red' ? 'Red Flag (วิกฤต)' : node.type === 'issue-yellow' ? 'Yellow Flag (เฝ้าระวัง)' : 'Green Flag (ผ่าน)';
                         const pageName = page.name || 'กระบวนการหลัก';
                         const nodeName = `การ์ดปัญหาบนผัง (X:${Math.round(node.x)}, Y:${Math.round(node.y)})`;
                         const owner = node.details?.owner || 'ระบุผู้รับผิดชอบ';
-                        const text = node.text || 'การ์ดปัญหา';
-                        rows.push([rowNum++, flagName, pageName, nodeName, owner, text]);
+                        rows.push([rowNum++, flagName, pageName, nodeName, owner, issueText]);
                     }
                 }
 
                 // 2. Main Node Issues List
                 const issues = node.details?.issues || [];
                 issues.forEach(issue => {
-                    const issueKey = issue.id ? issue.id : `${node.id}::${issue.flag}::${(issue.text || '').trim()}`;
+                    const flagType = issue.flag || 'red';
+                    const issueText = issue.text || '';
+                    const issueKey = `${page.id || 'p0'}:::${flagType}:::${issueText.trim().toLowerCase()}`;
                     if (!seenKeys.has(issueKey)) {
                         seenKeys.add(issueKey);
-                        const flagName = issue.flag === 'red' ? 'Red Flag (วิกฤต)' : issue.flag === 'yellow' ? 'Yellow Flag (เฝ้าระวัง)' : 'Green Flag (ผ่าน)';
+                        const flagName = flagType === 'red' ? 'Red Flag (วิกฤต)' : flagType === 'yellow' ? 'Yellow Flag (เฝ้าระวัง)' : 'Green Flag (ผ่าน)';
                         const pageName = page.name || 'กระบวนการหลัก';
                         const nodeName = (node.text || 'กระบวนการ').replace(/\n/g, ' ');
                         const owner = node.details?.owner || 'ระบุผู้รับผิดชอบ';
-                        const text = issue.text || '';
-                        rows.push([rowNum++, flagName, pageName, nodeName, owner, text]);
+                        rows.push([rowNum++, flagName, pageName, nodeName, owner, issueText]);
                     }
                 });
 
@@ -911,15 +916,15 @@
                 subNodes.forEach(sn => {
                     if (sn.type === 'issue-red' || sn.type === 'issue-yellow' || sn.type === 'issue-green') {
                         const flagType = sn.type === 'issue-red' ? 'red' : sn.type === 'issue-yellow' ? 'yellow' : 'green';
-                        const issueKey = sn.linkedIssueId ? sn.linkedIssueId : `${node.id}::${flagType}::${(sn.text || '').trim()}`;
+                        const issueText = sn.text || '';
+                        const issueKey = `${page.id || 'p0'}:::${flagType}:::${issueText.trim().toLowerCase()}`;
                         if (!seenKeys.has(issueKey)) {
                             seenKeys.add(issueKey);
-                            const flagName = sn.type === 'issue-red' ? 'Red Flag (วิกฤต)' : sn.type === 'issue-yellow' ? 'Yellow Flag (เฝ้าระวัง)' : 'Green Flag (ผ่าน)';
+                            const flagName = flagType === 'red' ? 'Red Flag (วิกฤต)' : flagType === 'yellow' ? 'Yellow Flag (เฝ้าระวัง)' : 'Green Flag (ผ่าน)';
                             const pageName = page.name || 'กระบวนการหลัก';
                             const nodeName = `ผังย่อยของ [${(node.text || 'กระบวนการ').replace(/\n/g, ' ')}]`;
                             const owner = node.details?.owner || 'ระบุผู้รับผิดชอบ';
-                            const text = sn.text || 'การ์ดปัญหาผังย่อย';
-                            rows.push([rowNum++, flagName, pageName, nodeName, owner, text]);
+                            rows.push([rowNum++, flagName, pageName, nodeName, owner, issueText]);
                         }
                     }
                 });
