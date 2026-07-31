@@ -13,7 +13,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <link rel="stylesheet" href="style.css?v=20260731_v10013">
+    <link rel="stylesheet" href="style.css?v=20260731_v10014">
 
     <style>
     #group-connections path,
@@ -414,6 +414,26 @@
                 </div>
                 <div class="form-row">
                     <div class="form-group">
+                        <label><i class="fa-solid fa-arrow-right-from-bracket"></i> จุดออกจากกล่องต้นทาง</label>
+                        <select id="conn-from-anchor-select">
+                            <option value="right">➡️ ขอบขวา (Right)</option>
+                            <option value="left">⬅️ ขอบซ้าย (Left)</option>
+                            <option value="top">⬆️ ขอบบน (Top)</option>
+                            <option value="bottom">⬇️ ขอบล่าง (Bottom)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-arrow-right-to-bracket"></i> จุดเข้ากล่องปลายทาง</label>
+                        <select id="conn-to-anchor-select">
+                            <option value="left">⬅️ ขอบซ้าย (Left)</option>
+                            <option value="right">➡️ ขอบขวา (Right)</option>
+                            <option value="top">⬆️ ขอบบน (Top)</option>
+                            <option value="bottom">⬇️ ขอบล่าง (Bottom)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
                         <label>สีเส้น (Line Color)</label>
                         <input type="color" id="conn-color" value="#475569">
                     </div>
@@ -695,6 +715,6 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="script.js?v=20260731_v10013"></script>
+    <script src="script.js?v=20260731_v10014"></script>
 </body>
 </html>

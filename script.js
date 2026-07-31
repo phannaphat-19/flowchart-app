@@ -1226,43 +1226,55 @@
 
     let subConnectMode = false;   // true = รอคลิกจากกล่อง → กล่อง
     let subConnFromId = null;      // id ของกล่องต้นทาง
+    let subConnFromAnchor = null;  // anchor ทิศทางกล่องต้นทาง (top, right, bottom, left)
     let selectedSubConnIdx = -1;   // index ของเส้นที่เลือกอยู่
 
-    function calculateSubPathD(fromSN, toSN, connIndexInPair = 0, totalConnsInPair = 1) {
+    function calculateSubPathD(fromSN, toSN, connIndexInPair = 0, totalConnsInPair = 1, customFromAnchor = null, customToAnchor = null) {
         const fw = fromSN.w || 130;
         const fh = fromSN.h || 50;
         const tw = toSN.w || 130;
         const th = toSN.h || 50;
 
-        const fromCenter = { x: fromSN.x + fw / 2, y: fromSN.y + fh / 2 };
-        const toCenter = { x: toSN.x + tw / 2, y: toSN.y + th / 2 };
+        const anchorPosMap = (sn, w, h) => ({
+            top: { x: sn.x + w / 2, y: sn.y },
+            right: { x: sn.x + w, y: sn.y + h / 2 },
+            bottom: { x: sn.x + w / 2, y: sn.y + h },
+            left: { x: sn.x, y: sn.y + h / 2 }
+        });
 
-        const dx = toCenter.x - fromCenter.x;
-        const dy = toCenter.y - fromCenter.y;
+        const fromAnchors = anchorPosMap(fromSN, fw, fh);
+        const toAnchors = anchorPosMap(toSN, tw, th);
+
+        const dx = (toSN.x + tw / 2) - (fromSN.x + fw / 2);
+        const dy = (toSN.y + th / 2) - (fromSN.y + fh / 2);
+
+        let fromAnchor = customFromAnchor;
+        let toAnchor = customToAnchor;
+
+        if (!fromAnchor) {
+            fromAnchor = Math.abs(dx) >= Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'bottom' : 'top');
+        }
+        if (!toAnchor) {
+            toAnchor = Math.abs(dx) >= Math.abs(dy) ? (dx > 0 ? 'left' : 'right') : (dy > 0 ? 'top' : 'bottom');
+        }
 
         const step = 20;
         const offsetPx = (connIndexInPair - (totalConnsInPair - 1) / 2) * step;
 
-        let startPt, endPt, dPath;
+        let startPt = { ...fromAnchors[fromAnchor] };
+        let endPt = { ...toAnchors[toAnchor] };
 
-        if (Math.abs(dx) >= Math.abs(dy)) {
-            if (dx > 0) {
-                startPt = { x: fromSN.x + fw, y: fromSN.y + fh / 2 + offsetPx };
-                endPt = { x: toSN.x, y: toSN.y + th / 2 + offsetPx };
-            } else {
-                startPt = { x: fromSN.x, y: fromSN.y + fh / 2 + offsetPx };
-                endPt = { x: toSN.x + tw, y: toSN.y + th / 2 + offsetPx };
-            }
+        if (fromAnchor === 'top' || fromAnchor === 'bottom') startPt.x += offsetPx;
+        else startPt.y += offsetPx;
+
+        if (toAnchor === 'top' || toAnchor === 'bottom') endPt.x += offsetPx;
+        else endPt.y += offsetPx;
+
+        let dPath;
+        if (fromAnchor === 'left' || fromAnchor === 'right') {
             const midX = (startPt.x + endPt.x) / 2;
             dPath = `M ${startPt.x},${startPt.y} H ${midX} V ${endPt.y} H ${endPt.x}`;
         } else {
-            if (dy > 0) {
-                startPt = { x: fromSN.x + fw / 2 + offsetPx, y: fromSN.y + fh };
-                endPt = { x: toSN.x + tw / 2 + offsetPx, y: toSN.y };
-            } else {
-                startPt = { x: fromSN.x + fw / 2 + offsetPx, y: fromSN.y };
-                endPt = { x: toSN.x + tw / 2 + offsetPx, y: toSN.y + th };
-            }
             const midY = (startPt.y + endPt.y) / 2;
             dPath = `M ${startPt.x},${startPt.y} V ${midY} H ${endPt.x} V ${endPt.y}`;
         }
@@ -1394,7 +1406,7 @@
                 const idxInPair = pairIndexes[pairKey] || 0;
                 pairIndexes[pairKey] = idxInPair + 1;
 
-                const route = calculateSubPathD(fromSN, toSN, idxInPair, totalInPair);
+                const route = calculateSubPathD(fromSN, toSN, idxInPair, totalInPair, conn.fromAnchor, conn.toAnchor);
 
                 // Thick invisible hit-box path for easy clicking/selecting
                 const hitPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
@@ -1551,10 +1563,10 @@
             const snW = sn.w || 130;
             const snH = sn.h || 50;
             const anchorCoords = [
-                { x: snW / 2, y: 0 },
-                { x: snW, y: snH / 2 },
-                { x: snW / 2, y: snH },
-                { x: 0, y: snH / 2 }
+                { x: snW / 2, y: 0, pos: 'top' },
+                { x: snW, y: snH / 2, pos: 'right' },
+                { x: snW / 2, y: snH, pos: 'bottom' },
+                { x: 0, y: snH / 2, pos: 'left' }
             ];
 
             anchorCoords.forEach(pt => {
@@ -1568,7 +1580,7 @@
                 circle.setAttribute('stroke-width', '2.5');
                 circle.style.cursor = 'crosshair';
                 circle.style.transition = 'all 0.15s ease';
-                circle.setAttribute('title', 'คลิกจุดนี้เพื่อเชื่อมสายในป๊อปอัพ (Click to Connect Sub-Flow)');
+                circle.setAttribute('title', `คลิกจุดนี้เพื่อเชื่อมสายจากฝั่ง ${pt.pos}`);
 
                 circle.addEventListener('mouseenter', () => {
                     circle.setAttribute('r', '11');
@@ -1585,6 +1597,7 @@
                     anchorEvt.stopPropagation();
                     if (!subConnFromId) {
                         subConnFromId = sn.id;
+                        subConnFromAnchor = pt.pos;
                         subConnectMode = true;
                         const btnConnect = getElem('btn-connect-subnode');
                         if (btnConnect) {
@@ -1594,8 +1607,15 @@
                         renderLargeSubFlowchartSVG(node);
                     } else if (subConnFromId !== sn.id) {
                         if (!node.details.subConns) node.details.subConns = [];
-                        node.details.subConns.push({ from: subConnFromId, to: sn.id, text: '' });
+                        node.details.subConns.push({
+                            from: subConnFromId,
+                            fromAnchor: subConnFromAnchor || 'right',
+                            to: sn.id,
+                            toAnchor: pt.pos || 'left',
+                            text: ''
+                        });
                         subConnFromId = null;
+                        subConnFromAnchor = null;
                         subConnectMode = false;
                         const btnConnect = getElem('btn-connect-subnode');
                         if (btnConnect) {
@@ -3180,11 +3200,15 @@
             if (propConnection) propConnection.style.display = 'block';
             const connTextInput = getElem('conn-text-input');
             const connStyleSelect = getElem('conn-style-select');
+            const connFromAnchorSelect = getElem('conn-from-anchor-select');
+            const connToAnchorSelect = getElem('conn-to-anchor-select');
             const connColor = getElem('conn-color');
             const connWidth = getElem('conn-width');
 
             if (connTextInput) connTextInput.value = conn.text || '';
             if (connStyleSelect) connStyleSelect.value = conn.style || 'orthogonal';
+            if (connFromAnchorSelect) connFromAnchorSelect.value = conn.fromAnchor || 'right';
+            if (connToAnchorSelect) connToAnchorSelect.value = conn.toAnchor || 'left';
             if (connColor) connColor.value = conn.color || '#475569';
             if (connWidth) connWidth.value = conn.width || 2;
         }
@@ -3269,8 +3293,7 @@
                 if (state.selectedItem?.type === 'node') {
                     const node = getCurrentPage().nodes.find(n => n.id === state.selectedItem.id);
                     if (node) {
-                        node.linkTargetNodeId = nodeLinkPageSelect.value;
-                        renderCanvas();
+                        node.linkTargetNodeId = nodeLinkPageSelect.value || null;
                         saveHistoryState();
                     }
                 }
