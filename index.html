@@ -13,7 +13,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <link rel="stylesheet" href="style.css?v=20260731_v10022">
+    <link rel="stylesheet" href="style.css?v=20260731_v10023">
 
     <style>
     #group-connections path,
@@ -535,6 +535,13 @@
                                     <button class="subflow-swatch-btn" data-bg="#f3e8ff" data-border="#8b5cf6" style="width:20px; height:20px; border-radius:50%; border:2px solid #8b5cf6; background:#f3e8ff; cursor:pointer;" title="สีม่วง (Purple)"></button>
                                     <button class="subflow-swatch-btn" data-bg="#1e293b" data-border="#475569" style="width:20px; height:20px; border-radius:50%; border:2px solid #475569; background:#1e293b; cursor:pointer;" title="สีเทาเข้ม (Dark Slate)"></button>
                                 </div>
+                                <div class="subflow-size-controls" style="display:inline-flex; align-items:center; gap:4px; background:#ffffff; padding:3px 8px; border-radius:8px; border:1px solid #cbd5e1;" title="ปรับขนาดกว้าง/สูงของกล่องย่อยที่เลือก (Sub-node Size Controls)">
+                                    <span style="font-size:11px; font-weight:700; color:#64748b;">📐 ขนาด:</span>
+                                    <span style="font-size:11px; color:#475569; font-weight:600;">↔</span>
+                                    <input type="number" id="subnode-width-input" min="60" max="600" step="5" style="width:48px; font-size:11px; font-weight:700; padding:2px 4px; border:1px solid #cbd5e1; border-radius:4px; text-align:center;" title="ความกว้าง (Width)" placeholder="กว้าง">
+                                    <span style="font-size:11px; color:#475569; font-weight:600;">↕</span>
+                                    <input type="number" id="subnode-height-input" min="35" max="400" step="5" style="width:48px; font-size:11px; font-weight:700; padding:2px 4px; border:1px solid #cbd5e1; border-radius:4px; text-align:center;" title="ความสูง (Height)" placeholder="สูง">
+                                </div>
                                 <div class="subflow-zoom-controls" style="display:inline-flex; align-items:center; gap:4px; margin-left:4px; background: rgba(241,245,249,0.8); padding: 3px 6px; border-radius: 8px; border: 1px solid #cbd5e1;">
                                     <button id="btn-subflow-zoom-out" class="btn-subtool-sm" title="ซูมออก (-)"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
                                     <span id="subflow-zoom-text" style="font-size:12px; font-weight:700; color:#475569; min-width:38px; text-align:center;">100%</span>
@@ -740,6 +747,6 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="script.js?v=20260731_v10022"></script>
+    <script src="script.js?v=20260731_v10023"></script>
 </body>
 </html>

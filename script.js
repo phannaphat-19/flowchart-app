@@ -1666,6 +1666,66 @@
                 g.appendChild(circle);
             });
 
+            // Render Corner Resize Handle if Selected
+            if (isSel) {
+                const wInput = getElem('subnode-width-input');
+                const hInput = getElem('subnode-height-input');
+                if (wInput) wInput.value = Math.round(sn.w || 130);
+                if (hInput) hInput.value = Math.round(sn.h || 50);
+
+                const resizeHandle = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                resizeHandle.setAttribute('transform', `translate(${sn.w || 130}, ${sn.h || 50})`);
+                resizeHandle.style.cursor = 'nwse-resize';
+                
+                const handleCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                handleCircle.setAttribute('r', '8');
+                handleCircle.setAttribute('fill', '#4f46e5');
+                handleCircle.setAttribute('stroke', '#ffffff');
+                handleCircle.setAttribute('stroke-width', '2');
+                handleCircle.setAttribute('title', 'ลากจุดนี้เพื่อปรับขนาดกล่อง (Drag to Resize Node)');
+
+                const handleIcon = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                handleIcon.setAttribute('d', 'M -2,2 L 2,2 L 2,-2 M -4,4 L 4,-4');
+                handleIcon.setAttribute('stroke', '#ffffff');
+                handleIcon.setAttribute('stroke-width', '1.5');
+                handleIcon.setAttribute('fill', 'none');
+
+                resizeHandle.appendChild(handleCircle);
+                resizeHandle.appendChild(handleIcon);
+
+                resizeHandle.addEventListener('mousedown', (resizeEvt) => {
+                    resizeEvt.stopPropagation();
+                    let isResizing = true;
+                    const startX = resizeEvt.clientX;
+                    const startY = resizeEvt.clientY;
+                    const origW = sn.w || 130;
+                    const origH = sn.h || 50;
+
+                    const onResizeMove = (moveEvt) => {
+                        if (!isResizing) return;
+                        const dw = moveEvt.clientX - startX;
+                        const dh = moveEvt.clientY - startY;
+                        sn.w = Math.max(60, Math.min(600, origW + dw));
+                        sn.h = Math.max(35, Math.min(400, origH + dh));
+                        renderLargeSubFlowchartSVG(node);
+                    };
+
+                    const onResizeUp = () => {
+                        if (isResizing) {
+                            isResizing = false;
+                            window.removeEventListener('mousemove', onResizeMove);
+                            window.removeEventListener('mouseup', onResizeUp);
+                            saveHistoryState();
+                        }
+                    };
+
+                    window.addEventListener('mousemove', onResizeMove);
+                    window.addEventListener('mouseup', onResizeUp);
+                });
+
+                g.appendChild(resizeHandle);
+            }
+
             // Sub-Node Mouse Dragging Engine & Selection & Double-Click Nested Flow
             g.addEventListener('mousedown', (e) => {
                 e.stopPropagation();
@@ -1864,6 +1924,33 @@
                 }
             };
         });
+
+        const widthInput = getElem('subnode-width-input');
+        const heightInput = getElem('subnode-height-input');
+        if (widthInput) {
+            widthInput.addEventListener('input', () => {
+                const node = activeSubflowCurrentNode || (subflowModalStack.length > 0 ? subflowModalStack[subflowModalStack.length - 1] : null);
+                if (!node || !selectedSubNodeId) return;
+                const subNode = node.details?.subNodes?.find(s => s.id === selectedSubNodeId);
+                if (subNode) {
+                    subNode.w = Math.max(60, parseInt(widthInput.value) || 130);
+                    renderLargeSubFlowchartSVG(node);
+                }
+            });
+            widthInput.addEventListener('change', () => saveHistoryState());
+        }
+        if (heightInput) {
+            heightInput.addEventListener('input', () => {
+                const node = activeSubflowCurrentNode || (subflowModalStack.length > 0 ? subflowModalStack[subflowModalStack.length - 1] : null);
+                if (!node || !selectedSubNodeId) return;
+                const subNode = node.details?.subNodes?.find(s => s.id === selectedSubNodeId);
+                if (subNode) {
+                    subNode.h = Math.max(35, parseInt(heightInput.value) || 50);
+                    renderLargeSubFlowchartSVG(node);
+                }
+            });
+            heightInput.addEventListener('change', () => saveHistoryState());
+        }
 
         if (btnConnectSub) {
             btnConnectSub.addEventListener('click', () => {
