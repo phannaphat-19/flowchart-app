@@ -1669,15 +1669,10 @@ input[type="color"] {
 /* Connection Port Anchors */
 .node-anchor {
     fill: #ffffff;
-    stroke: var(--primary);
-    stroke-width: 2px;
+    stroke: #0284c7;
+    stroke-width: 2.5px;
     cursor: crosshair;
-    opacity: 0;
-    transition: opacity 0.2s;
-}
-
-.flow-node:hover .node-anchor, .node-anchor.hovered {
-    opacity: 1;
+    transition: all 0.15s ease-in-out;
 }
 
 .node-anchor:hover {

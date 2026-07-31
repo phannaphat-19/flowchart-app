@@ -2422,10 +2422,12 @@
                 break;
         }
 
+        const isFirstConnect = state.firstConnectNodeId === node.id;
         if (node.type !== 'subprocess' && node.type !== 'swimlane' && !node.type.startsWith('issue-')) {
             shapeElem.setAttribute('fill', bg);
-            shapeElem.setAttribute('stroke', border);
-            shapeElem.setAttribute('stroke-width', isSelected ? '2.5' : '1.5');
+            shapeElem.setAttribute('stroke', isFirstConnect ? '#0284c7' : border);
+            shapeElem.setAttribute('stroke-width', (isSelected || isFirstConnect) ? '3' : '1.5');
+            if (isFirstConnect) shapeElem.setAttribute('stroke-dasharray', '4,3');
         }
 
         g.appendChild(shapeElem);
@@ -2553,9 +2555,10 @@
             anchorCircle.setAttribute('class', 'node-anchor');
             anchorCircle.setAttribute('cx', anchors[pos].x - node.x);
             anchorCircle.setAttribute('cy', anchors[pos].y - node.y);
-            anchorCircle.setAttribute('r', 5);
+            anchorCircle.setAttribute('r', 8);
             anchorCircle.setAttribute('data-node-id', node.id);
             anchorCircle.setAttribute('data-anchor', pos);
+            anchorCircle.setAttribute('title', 'คลิกหรือลากจุดนี้เพื่อเชื่อมสาย (Click/Drag to Connect)');
 
             g.appendChild(anchorCircle);
         });
@@ -2896,11 +2899,12 @@
                 if (!state.firstConnectNodeId) {
                     state.firstConnectNodeId = nodeId;
                     selectItem('node', nodeId, false);
+                    renderCanvas();
                 } else if (state.firstConnectNodeId !== nodeId) {
                     const newConn = {
                         id: `conn-${Date.now()}`,
                         fromNodeId: state.firstConnectNodeId,
-                        fromAnchor: 'right',
+                        fromAnchor: anchorPos || 'right',
                         toNodeId: nodeId,
                         toAnchor: 'left',
                         text: '',
@@ -2916,6 +2920,7 @@
                     saveHistoryState();
                 } else {
                     state.firstConnectNodeId = null;
+                    renderCanvas();
                 }
                 return;
             }
