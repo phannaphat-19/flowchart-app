@@ -197,9 +197,13 @@
 
     // --- INITIALIZATION ---
     function init() {
-        // Auto-purge any stale cached elements containing 'Shared Sub-Flow' or 'แชร์ผังย่อย'
-        document.querySelectorAll('.highlight-box, div, select, label').forEach(el => {
-            if (el.textContent && (el.textContent.includes('Shared Sub-Flow') || el.textContent.includes('แชร์ผังย่อย'))) {
+        // Dynamic DOM Purge for Right Inspector Subflow elements
+        ['btn-open-drawer', 'btn-open-inspector-subflow', 'node-link-page-group', 'modal-shared-flow-group'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.remove();
+        });
+        document.querySelectorAll('.highlight-box, div, select, label, button').forEach(el => {
+            if (el.textContent && (el.textContent.includes('Shared Sub-Flow') || el.textContent.includes('แชร์ผังย่อย') || el.textContent.includes('Open Large Editable Modal') || el.textContent.includes('เปิดดู/แก้ไขผังย่อย'))) {
                 el.remove();
             }
         });
