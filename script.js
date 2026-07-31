@@ -1616,6 +1616,114 @@
         const btnBack = getElem('btn-modal-back');
         if (btnBack) btnBack.addEventListener('click', popSubflowModalBack);
 
+        if (btnAddProc) {
+            btnAddProc.addEventListener('click', () => {
+                if (!activeSubflowCurrentNode) return;
+                if (!activeSubflowCurrentNode.details) activeSubflowCurrentNode.details = { subNodes: [], subConns: [] };
+                if (!activeSubflowCurrentNode.details.subNodes) activeSubflowCurrentNode.details.subNodes = [];
+                
+                const newId = `sub-${Date.now()}`;
+                activeSubflowCurrentNode.details.subNodes.push({
+                    id: newId,
+                    type: 'process',
+                    text: 'ขั้นตอนย่อยใหม่',
+                    x: 60 + Math.random() * 200,
+                    y: 60 + Math.random() * 150,
+                    bg: '#ffffff',
+                    borderColor: '#0284c7'
+                });
+                selectedSubNodeId = newId;
+                renderLargeSubFlowchartSVG(activeSubflowCurrentNode);
+                saveHistoryState();
+            });
+        }
+
+        if (btnAddDec) {
+            btnAddDec.addEventListener('click', () => {
+                if (!activeSubflowCurrentNode) return;
+                if (!activeSubflowCurrentNode.details) activeSubflowCurrentNode.details = { subNodes: [], subConns: [] };
+                if (!activeSubflowCurrentNode.details.subNodes) activeSubflowCurrentNode.details.subNodes = [];
+
+                const newId = `sub-${Date.now()}`;
+                activeSubflowCurrentNode.details.subNodes.push({
+                    id: newId,
+                    type: 'decision',
+                    text: 'เงื่อนไขใหม่?',
+                    x: 80 + Math.random() * 200,
+                    y: 80 + Math.random() * 150,
+                    bg: '#ffffff',
+                    borderColor: '#f59e0b'
+                });
+                selectedSubNodeId = newId;
+                renderLargeSubFlowchartSVG(activeSubflowCurrentNode);
+                saveHistoryState();
+            });
+        }
+
+        if (btnAddIssueRed) {
+            btnAddIssueRed.addEventListener('click', () => {
+                if (!activeSubflowCurrentNode) return;
+                if (!activeSubflowCurrentNode.details) activeSubflowCurrentNode.details = { subNodes: [], subConns: [] };
+                if (!activeSubflowCurrentNode.details.subNodes) activeSubflowCurrentNode.details.subNodes = [];
+
+                const newId = `sub-${Date.now()}`;
+                activeSubflowCurrentNode.details.subNodes.push({
+                    id: newId,
+                    type: 'issue-red',
+                    text: '🚩 รายงานปัญหาสำคัญ',
+                    x: 100 + Math.random() * 200,
+                    y: 100 + Math.random() * 150,
+                    bg: '#fef2f2',
+                    borderColor: '#ef4444'
+                });
+                selectedSubNodeId = newId;
+                renderLargeSubFlowchartSVG(activeSubflowCurrentNode);
+                saveHistoryState();
+            });
+        }
+
+        if (btnDelSub) {
+            btnDelSub.addEventListener('click', () => {
+                if (!activeSubflowCurrentNode) return;
+                if (selectedSubNodeId) {
+                    if (activeSubflowCurrentNode.details?.subNodes) {
+                        activeSubflowCurrentNode.details.subNodes = activeSubflowCurrentNode.details.subNodes.filter(s => s.id !== selectedSubNodeId);
+                    }
+                    if (activeSubflowCurrentNode.details?.subConns) {
+                        activeSubflowCurrentNode.details.subConns = activeSubflowCurrentNode.details.subConns.filter(c => c.from !== selectedSubNodeId && c.to !== selectedSubNodeId);
+                    }
+                    selectedSubNodeId = null;
+                    renderLargeSubFlowchartSVG(activeSubflowCurrentNode);
+                    saveHistoryState();
+                } else if (selectedSubConnIdx >= 0) {
+                    if (activeSubflowCurrentNode.details?.subConns) {
+                        activeSubflowCurrentNode.details.subConns.splice(selectedSubConnIdx, 1);
+                    }
+                    selectedSubConnIdx = -1;
+                    renderLargeSubFlowchartSVG(activeSubflowCurrentNode);
+                    saveHistoryState();
+                } else {
+                    alert('⚠️ กรุณาคลิกเลือกกล่องย่อย หรือเส้นเชื่อมที่ต้องการลบก่อนครับ');
+                }
+            });
+        }
+
+        if (btnDelConn) {
+            btnDelConn.addEventListener('click', () => {
+                if (!activeSubflowCurrentNode) return;
+                if (selectedSubConnIdx >= 0) {
+                    if (activeSubflowCurrentNode.details?.subConns) {
+                        activeSubflowCurrentNode.details.subConns.splice(selectedSubConnIdx, 1);
+                    }
+                    selectedSubConnIdx = -1;
+                    renderLargeSubFlowchartSVG(activeSubflowCurrentNode);
+                    saveHistoryState();
+                } else {
+                    alert('⚠️ กรุณาคลิกเลือกเส้นเชื่อมที่ต้องการลบก่อนครับ');
+                }
+            });
+        }
+
         if (btnConnectSub) {
             btnConnectSub.addEventListener('click', () => {
                 subConnectMode = !subConnectMode;
