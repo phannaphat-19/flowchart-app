@@ -1784,47 +1784,17 @@
         }
 
         if (btnDelSub) {
-            btnDelSub.addEventListener('click', () => {
-                const node = activeSubflowCurrentNode || (subflowModalStack.length > 0 ? subflowModalStack[subflowModalStack.length - 1] : null);
-                if (!node) return;
-                if (selectedSubNodeId) {
-                    if (node.details?.subNodes) {
-                        node.details.subNodes = node.details.subNodes.filter(s => s.id !== selectedSubNodeId);
-                    }
-                    if (node.details?.subConns) {
-                        node.details.subConns = node.details.subConns.filter(c => c.from !== selectedSubNodeId && c.to !== selectedSubNodeId);
-                    }
-                    selectedSubNodeId = null;
-                    renderLargeSubFlowchartSVG(node);
-                    saveHistoryState();
-                } else if (selectedSubConnIdx >= 0) {
-                    if (node.details?.subConns) {
-                        node.details.subConns.splice(selectedSubConnIdx, 1);
-                    }
-                    selectedSubConnIdx = -1;
-                    renderLargeSubFlowchartSVG(node);
-                    saveHistoryState();
-                } else {
-                    alert('⚠️ กรุณาคลิกเลือกกล่องย่อย หรือเส้นเชื่อมที่ต้องการลบก่อนครับ');
-                }
-            });
+            btnDelSub.onclick = (e) => {
+                e.stopPropagation();
+                deleteSelectedSubItem();
+            };
         }
 
         if (btnDelConn) {
-            btnDelConn.addEventListener('click', () => {
-                const node = activeSubflowCurrentNode || (subflowModalStack.length > 0 ? subflowModalStack[subflowModalStack.length - 1] : null);
-                if (!node) return;
-                if (selectedSubConnIdx >= 0) {
-                    if (node.details?.subConns) {
-                        node.details.subConns.splice(selectedSubConnIdx, 1);
-                    }
-                    selectedSubConnIdx = -1;
-                    renderLargeSubFlowchartSVG(node);
-                    saveHistoryState();
-                } else {
-                    alert('⚠️ กรุณาคลิกเลือกเส้นเชื่อมที่ต้องการลบก่อนครับ');
-                }
-            });
+            btnDelConn.onclick = (e) => {
+                e.stopPropagation();
+                deleteSelectedSubConnItem();
+            };
         }
 
         if (btnConnectSub) {
@@ -1935,66 +1905,7 @@
 
 
 
-        // Toggle Connection Mode
-        if (btnConnectSub) {
-            btnConnectSub.addEventListener('click', () => {
-                subConnectMode = !subConnectMode;
-                subConnFromId = null;
-                if (subConnectMode) {
-                    btnConnectSub.style.background = '#06b6d4';
-                    btnConnectSub.style.color = '#ffffff';
-                } else {
-                    btnConnectSub.style.background = '';
-                    btnConnectSub.style.color = '#0284c7';
-                }
-                if (state.selectedItem?.type === 'node') {
-                    const node = getCurrentPage().nodes.find(n => n.id === state.selectedItem.id);
-                    if (node) renderLargeSubFlowchartSVG(node);
-                }
-            });
-        }
 
-        // Delete Selected Line
-        if (btnDelConn) {
-            btnDelConn.addEventListener('click', () => {
-                if (state.selectedItem?.type === 'node') {
-                    const node = getCurrentPage().nodes.find(n => n.id === state.selectedItem.id);
-                    if (node && node.details?.subConns) {
-                        if (selectedSubConnIdx >= 0 && selectedSubConnIdx < node.details.subConns.length) {
-                            node.details.subConns.splice(selectedSubConnIdx, 1);
-                            selectedSubConnIdx = -1;
-                            renderLargeSubFlowchartSVG(node);
-                        } else if (node.details.subConns.length > 0) {
-                            node.details.subConns.pop();
-                            renderLargeSubFlowchartSVG(node);
-                        } else {
-                            alert('⚠️ ไม่มีเส้นเชื่อมในผังย่อยนี้ให้ลบครับ');
-                        }
-                    }
-                }
-            });
-        }
-
-        // Delete Selected Box (Toolbar Button)
-        if (btnDelSub) {
-            btnDelSub.addEventListener('click', () => {
-                if (state.selectedItem?.type === 'node') {
-                    const node = getCurrentPage().nodes.find(n => n.id === state.selectedItem.id);
-                    if (node && node.details?.subNodes) {
-                        if (selectedSubNodeId) {
-                            node.details.subNodes = node.details.subNodes.filter(sn => sn.id !== selectedSubNodeId);
-                            node.details.subConns = (node.details.subConns || []).filter(sc => sc.from !== selectedSubNodeId && sc.to !== selectedSubNodeId);
-                            selectedSubNodeId = null;
-                            renderLargeSubFlowchartSVG(node);
-                        } else if (node.details.subNodes.length > 0) {
-                            const lastSN = node.details.subNodes.pop();
-                            node.details.subConns = (node.details.subConns || []).filter(sc => sc.from !== lastSN.id && sc.to !== lastSN.id);
-                            renderLargeSubFlowchartSVG(node);
-                        }
-                    }
-                }
-            });
-        }
 
         if (btnSave) {
             btnSave.addEventListener('click', () => {
@@ -3589,6 +3500,12 @@
     }
 
     function deleteSelectedItem() {
+        const modal = getElem('subflow-modal');
+        if (modal && (modal.style.display === 'flex' || modal.style.display === 'block')) {
+            deleteSelectedSubItem();
+            return;
+        }
+
         if (!state.selectedItem) return;
         const page = getCurrentPage();
 
@@ -3602,6 +3519,42 @@
 
         deselectAll();
         saveHistoryState();
+    }
+
+    function deleteSelectedSubItem() {
+        const node = activeSubflowCurrentNode || (subflowModalStack.length > 0 ? subflowModalStack[subflowModalStack.length - 1] : null);
+        if (!node) return;
+
+        if (selectedSubNodeId) {
+            const targetId = selectedSubNodeId;
+            if (node.details?.subNodes) {
+                node.details.subNodes = node.details.subNodes.filter(s => s.id !== targetId);
+            }
+            if (node.details?.subConns) {
+                node.details.subConns = node.details.subConns.filter(c => c.from !== targetId && c.to !== targetId);
+            }
+            selectedSubNodeId = null;
+            renderLargeSubFlowchartSVG(node);
+            saveHistoryState();
+        } else if (selectedSubConnIdx >= 0) {
+            deleteSelectedSubConnItem();
+        } else {
+            alert('⚠️ กรุณาคลิกเลือกกล่องย่อย หรือเส้นเชื่อมที่ต้องการลบก่อนครับ');
+        }
+    }
+
+    function deleteSelectedSubConnItem() {
+        const node = activeSubflowCurrentNode || (subflowModalStack.length > 0 ? subflowModalStack[subflowModalStack.length - 1] : null);
+        if (!node) return;
+
+        if (selectedSubConnIdx >= 0 && node.details?.subConns && selectedSubConnIdx < node.details.subConns.length) {
+            node.details.subConns.splice(selectedSubConnIdx, 1);
+            selectedSubConnIdx = -1;
+            renderLargeSubFlowchartSVG(node);
+            saveHistoryState();
+        } else {
+            alert('⚠️ กรุณาคลิกเลือกเส้นเชื่อมในผังย่อยที่ต้องการลบก่อนครับ');
+        }
     }
 
     function setupHeaderEvents() {
