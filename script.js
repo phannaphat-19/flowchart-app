@@ -109,15 +109,6 @@
                 gridBtn.textContent = '◻️';
             }
         }
-        if (modalGridBtn && modalGridText) {
-            if (showCanvasGrid) {
-                modalGridBtn.classList.remove('off');
-                modalGridText.textContent = 'ตาราง: เปิด';
-            } else {
-                modalGridBtn.classList.add('off');
-                modalGridText.textContent = 'ตาราง: ปิด';
-            }
-        }
     }
 
     const AUTOSAVE_KEY = 'flowstudio_pro_autosave_data_v2';
