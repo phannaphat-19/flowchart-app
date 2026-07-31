@@ -13,7 +13,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <link rel="stylesheet" href="style.css?v=20260731_v10016">
+    <link rel="stylesheet" href="style.css?v=20260731_v10017">
 
     <style>
     #group-connections path,
@@ -491,11 +491,20 @@
                             <div class="subflow-toolbar-title">
                                 <i class="fa-solid fa-arrows-up-down-left-right"></i> ลากย้ายรูปทรงย่อยอิสระ & ปรับสี/ชนิดรูปทรงย่อย
                             </div>
-                            <div class="subflow-quick-actions">
+                            <div class="subflow-quick-actions" style="display:flex; flex-wrap:wrap; gap:5px; align-items:center;">
+                                <button id="btn-add-subnode-process" class="btn-subtool-sm btn-add-shape" data-shape="process" title="เพิ่มขั้นตอนย่อย (Process)">
+                                    <i class="fa-solid fa-plus"></i> เพิ่มขั้นตอน
+                                </button>
+                                <button id="btn-add-subnode-decision" class="btn-subtool-sm warning btn-add-shape" data-shape="decision" title="เพิ่มเงื่อนไขย่อย (Decision)">
+                                    <i class="fa-solid fa-code-branch"></i> เพิ่มเงื่อนไข
+                                </button>
+                                <button id="btn-add-subnode-issue-red" class="btn-subtool-sm danger btn-add-shape" data-shape="issue-red" title="แปะการ์ดปัญหา Red Flag บนผังย่อย">
+                                    <i class="fa-solid fa-flag"></i> 🚩 แปะปัญหา (Red Flag)
+                                </button>
                                 <select id="subflow-add-shape-select" style="border: 1px solid #4f46e5; font-size:12px; font-weight:600; cursor:pointer; background:#ffffff; color:#4f46e5; padding: 4px 8px; border-radius: 6px;">
-                                    <option value="">➕ เพิ่มรูปทรงย่อย...</option>
-                                    <option value="process">🟦 กระบวนการ (Process)</option>
+                                    <option value="">➕ เลือกเพิ่มรูปทรงย่อยอื่นๆ...</option>
                                     <option value="startend">🔵 เริ่ม-จบ (Start/End)</option>
+                                    <option value="process">🟦 ขั้นตอน (Process)</option>
                                     <option value="decision">🔶 เงื่อนไข (Decision)</option>
                                     <option value="inputoutput">▱ รับ-แสดงผล (Input/Output)</option>
                                     <option value="document">📄 เอกสาร (Document)</option>
@@ -504,15 +513,6 @@
                                     <option value="issue-yellow">🟡 Yellow Flag (เฝ้าระวัง)</option>
                                     <option value="issue-green">🟩 Green Flag (ผ่าน)</option>
                                 </select>
-                                <button id="btn-add-subnode-process" class="btn-subtool-sm" title="เพิ่มขั้นตอนย่อย (Process)">
-                                    <i class="fa-solid fa-plus"></i> เพิ่มขั้นตอน
-                                </button>
-                                <button id="btn-add-subnode-decision" class="btn-subtool-sm warning" title="เพิ่มเงื่อนไขย่อย (Decision)">
-                                    <i class="fa-solid fa-code-branch"></i> เพิ่มเงื่อนไข
-                                </button>
-                                <button id="btn-add-subnode-issue-red" class="btn-subtool-sm danger" title="แปะการ์ดปัญหา Red Flag บนผังย่อย">
-                                    <i class="fa-solid fa-flag"></i> 🚩 แปะปัญหา (Red Flag)
-                                </button>
                                 <button id="btn-connect-subnode" class="btn-subtool-sm" title="ลากเส้นเชื่อมระหว่างกล่อง (Connect Mode)" style="border-color:#06b6d4; color:#0284c7;">
                                     <i class="fa-solid fa-bezier-curve"></i> เส้นเชื่อม
                                 </button>
@@ -727,6 +727,6 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="script.js?v=20260731_v10016"></script>
+    <script src="script.js?v=20260731_v10017"></script>
 </body>
 </html>

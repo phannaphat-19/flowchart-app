@@ -1696,6 +1696,45 @@
         openSubflowModal(subNode, true);
     }
 
+    function addSubNodeShape(shapeType) {
+        const node = activeSubflowCurrentNode || (subflowModalStack.length > 0 ? subflowModalStack[subflowModalStack.length - 1] : null);
+        if (!node) return;
+        if (!node.details) node.details = { desc: '', steps: '', owner: '', docs: '', issues: [], subNodes: [], subConns: [] };
+        if (!node.details.subNodes) node.details.subNodes = [];
+
+        const newId = `sub-${Date.now()}`;
+        const count = node.details.subNodes.length + 1;
+        const defaultText = shapeType === 'startend' ? 'เริ่มต้น / สิ้นสุด' :
+                            shapeType === 'process' ? `ขั้นตอนย่อยที่ ${count}` :
+                            shapeType === 'decision' ? 'เงื่อนไขตรวจสอบ?' :
+                            shapeType === 'inputoutput' ? 'รับ/แสดงข้อมูล' :
+                            shapeType === 'document' ? 'เอกสารอ้างอิง' :
+                            shapeType === 'connector' ? 'A1' :
+                            shapeType === 'issue-red' ? '🚩 ระบุปัญหา Red Flag' :
+                            shapeType === 'issue-yellow' ? '🟡 เฝ้าระวัง Yellow Flag' :
+                            '🟩 ผ่าน Green Flag';
+
+        const bgCol = shapeType === 'issue-red' ? '#fef2f2' : shapeType === 'issue-yellow' ? '#fffbeb' : shapeType === 'issue-green' ? '#ecfdf5' : '#ffffff';
+        const borderCol = shapeType === 'issue-red' ? '#ef4444' : shapeType === 'issue-yellow' ? '#f59e0b' : shapeType === 'issue-green' ? '#10b981' : (shapeType === 'decision' ? '#f59e0b' : '#0284c7');
+
+        const newSubNode = {
+            id: newId,
+            type: shapeType,
+            text: defaultText,
+            x: 80 + (node.details.subNodes.length % 5) * 40,
+            y: 80 + Math.floor(node.details.subNodes.length / 5) * 30,
+            w: shapeType === 'connector' ? 45 : (shapeType.startsWith('issue-') ? 180 : 130),
+            h: shapeType === 'connector' ? 45 : (shapeType === 'decision' ? 55 : 50),
+            bg: bgCol,
+            borderColor: borderCol
+        };
+
+        node.details.subNodes.push(newSubNode);
+        selectedSubNodeId = newId;
+        renderLargeSubFlowchartSVG(node);
+        saveHistoryState();
+    }
+
     function setupSubflowModalEvents() {
         const btnOpenDrawer = getElem('btn-open-drawer');
         const btnClose = getElem('btn-close-subflow-modal');
@@ -1725,79 +1764,23 @@
         const btnBack = getElem('btn-modal-back');
         if (btnBack) btnBack.addEventListener('click', popSubflowModalBack);
 
-        if (btnAddProc) {
-            btnAddProc.addEventListener('click', () => {
-                const node = activeSubflowCurrentNode || (subflowModalStack.length > 0 ? subflowModalStack[subflowModalStack.length - 1] : null);
-                if (!node) return;
-                if (!node.details) node.details = { desc: '', steps: '', owner: '', docs: '', issues: [], subNodes: [], subConns: [] };
-                if (!node.details.subNodes) node.details.subNodes = [];
-                
-                const newId = `sub-${Date.now()}`;
-                node.details.subNodes.push({
-                    id: newId,
-                    type: 'process',
-                    text: 'ขั้นตอนย่อยใหม่',
-                    x: 60 + Math.random() * 180,
-                    y: 60 + Math.random() * 120,
-                    w: 130,
-                    h: 50,
-                    bg: '#ffffff',
-                    borderColor: '#0284c7'
-                });
-                selectedSubNodeId = newId;
-                renderLargeSubFlowchartSVG(node);
-                saveHistoryState();
-            });
-        }
+        document.querySelectorAll('.btn-add-shape').forEach(btn => {
+            btn.onclick = (e) => {
+                e.stopPropagation();
+                const shapeType = btn.getAttribute('data-shape');
+                if (shapeType) addSubNodeShape(shapeType);
+            };
+        });
 
-        if (btnAddDec) {
-            btnAddDec.addEventListener('click', () => {
-                const node = activeSubflowCurrentNode || (subflowModalStack.length > 0 ? subflowModalStack[subflowModalStack.length - 1] : null);
-                if (!node) return;
-                if (!node.details) node.details = { desc: '', steps: '', owner: '', docs: '', issues: [], subNodes: [], subConns: [] };
-                if (!node.details.subNodes) node.details.subNodes = [];
-
-                const newId = `sub-${Date.now()}`;
-                node.details.subNodes.push({
-                    id: newId,
-                    type: 'decision',
-                    text: 'เงื่อนไขใหม่?',
-                    x: 80 + Math.random() * 180,
-                    y: 80 + Math.random() * 120,
-                    w: 130,
-                    h: 55,
-                    bg: '#ffffff',
-                    borderColor: '#f59e0b'
-                });
-                selectedSubNodeId = newId;
-                renderLargeSubFlowchartSVG(node);
-                saveHistoryState();
-            });
-        }
-
-        if (btnAddIssueRed) {
-            btnAddIssueRed.addEventListener('click', () => {
-                const node = activeSubflowCurrentNode || (subflowModalStack.length > 0 ? subflowModalStack[subflowModalStack.length - 1] : null);
-                if (!node) return;
-                if (!node.details) node.details = { desc: '', steps: '', owner: '', docs: '', issues: [], subNodes: [], subConns: [] };
-                if (!node.details.subNodes) node.details.subNodes = [];
-
-                const newId = `sub-${Date.now()}`;
-                node.details.subNodes.push({
-                    id: newId,
-                    type: 'issue-red',
-                    text: '🚩 ระบุปัญหา Red Flag',
-                    x: 100 + Math.random() * 180,
-                    y: 100 + Math.random() * 120,
-                    w: 180,
-                    h: 60,
-                    bg: '#fef2f2',
-                    borderColor: '#ef4444'
-                });
-                selectedSubNodeId = newId;
-                renderLargeSubFlowchartSVG(node);
-                saveHistoryState();
-            });
+        const subflowAddShapeSelect = getElem('subflow-add-shape-select');
+        if (subflowAddShapeSelect) {
+            subflowAddShapeSelect.onchange = () => {
+                const shapeType = subflowAddShapeSelect.value;
+                if (shapeType) {
+                    addSubNodeShape(shapeType);
+                    subflowAddShapeSelect.value = '';
+                }
+            };
         }
 
         if (btnDelSub) {
@@ -1950,50 +1933,7 @@
             });
         }
 
-        const subflowAddShapeSelect = getElem('subflow-add-shape-select');
-        if (subflowAddShapeSelect) {
-            subflowAddShapeSelect.addEventListener('change', () => {
-                const shapeType = subflowAddShapeSelect.value;
-                if (!shapeType) return;
 
-                const node = activeSubflowCurrentNode || (subflowModalStack.length > 0 ? subflowModalStack[subflowModalStack.length - 1] : null);
-                if (!node) return;
-                if (!node.details) node.details = { desc: '', steps: '', owner: '', docs: '', issues: [], subNodes: [], subConns: [] };
-                if (!node.details.subNodes) node.details.subNodes = [];
-
-                const newId = `sub-${Date.now()}`;
-                const count = node.details.subNodes.length + 1;
-                const defaultText = shapeType === 'startend' ? 'จุดเริ่มต้น / สิ้นสุด' :
-                                    shapeType === 'process' ? `ขั้นตอนย่อยที่ ${count}` :
-                                    shapeType === 'decision' ? 'เงื่อนไขใหม่?' :
-                                    shapeType === 'inputoutput' ? 'รับ/แสดงข้อมูล' :
-                                    shapeType === 'document' ? 'เอกสารอ้างอิง' :
-                                    shapeType === 'connector' ? 'A1' :
-                                    shapeType === 'issue-red' ? '🚩 ระบุปัญหา Red Flag' :
-                                    shapeType === 'issue-yellow' ? '🟡 เฝ้าระวัง Yellow Flag' :
-                                    '🟩 ผ่าน Green Flag';
-
-                const bgCol = shapeType === 'issue-red' ? '#fef2f2' : shapeType === 'issue-yellow' ? '#fffbeb' : shapeType === 'issue-green' ? '#ecfdf5' : '#ffffff';
-                const borderCol = shapeType === 'issue-red' ? '#ef4444' : shapeType === 'issue-yellow' ? '#f59e0b' : shapeType === 'issue-green' ? '#10b981' : '#0284c7';
-
-                node.details.subNodes.push({
-                    id: newId,
-                    type: shapeType,
-                    text: defaultText,
-                    x: 60 + Math.random() * 200,
-                    y: 60 + Math.random() * 140,
-                    w: shapeType === 'connector' ? 45 : (shapeType.startsWith('issue-') ? 180 : 130),
-                    h: shapeType === 'connector' ? 45 : (shapeType === 'decision' ? 55 : 50),
-                    bg: bgCol,
-                    borderColor: borderCol
-                });
-
-                selectedSubNodeId = newId;
-                subflowAddShapeSelect.value = '';
-                renderLargeSubFlowchartSVG(node);
-                saveHistoryState();
-            });
-        }
 
         // Toggle Connection Mode
         if (btnConnectSub) {
