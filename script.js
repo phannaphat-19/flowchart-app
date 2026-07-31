@@ -143,43 +143,57 @@
         }
     }
 
-    const AUTOSAVE_KEY = 'flowstudio_pro_autosave_data_v2';
+    const AUTOSAVE_KEY = 'flowstudio_pro_autosave_data_v3';
     let autoSaveTimer = null;
+
+    function saveAutoSaveDataNow() {
+        try {
+            const now = new Date();
+            const data = {
+                title: state.title,
+                activePageIndex: state.activePageIndex,
+                pages: state.pages,
+                issues: state.issues || [],
+                updatedAt: now.toISOString()
+            };
+            localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(data));
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const timeStr = `${hours}:${minutes}:${seconds}`;
+            flashAutoSaveBadge(timeStr);
+        } catch (e) {
+            console.error('AutoSave failed:', e);
+        }
+    }
 
     function triggerAutoSave() {
         if (autoSaveTimer) clearTimeout(autoSaveTimer);
         autoSaveTimer = setTimeout(() => {
-            try {
-                const data = {
-                    title: state.title,
-                    activePageIndex: state.activePageIndex,
-                    pages: state.pages,
-                    issues: state.issues || [],
-                    updatedAt: new Date().toISOString()
-                };
-                localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(data));
-                flashAutoSaveBadge();
-            } catch (e) {
-                console.error('AutoSave failed:', e);
-            }
-        }, 300);
+            saveAutoSaveDataNow();
+        }, 200);
     }
 
-    function flashAutoSaveBadge() {
+    function flashAutoSaveBadge(timeStr) {
         const badge = getElem('autosave-status-badge');
         if (badge) {
+            if (timeStr) {
+                badge.innerHTML = `<i class="fa-solid fa-cloud-check" style="font-size:12px; color:#10b981;"></i> ⚡ บันทึกแล้ว ${timeStr} น.`;
+            }
             badge.style.transform = 'scale(1.08)';
-            badge.style.background = 'rgba(16,185,129,0.25)';
+            badge.style.background = 'rgba(16,185,129,0.3)';
+            badge.style.borderColor = 'rgba(16,185,129,0.6)';
             setTimeout(() => {
                 badge.style.transform = 'scale(1)';
                 badge.style.background = 'rgba(16,185,129,0.12)';
-            }, 300);
+                badge.style.borderColor = 'rgba(16,185,129,0.3)';
+            }, 350);
         }
     }
 
     function loadAutoSaveData() {
         try {
-            const raw = localStorage.getItem(AUTOSAVE_KEY);
+            const raw = localStorage.getItem(AUTOSAVE_KEY) || localStorage.getItem('flowstudio_pro_autosave_data_v2');
             if (!raw) return false;
             const data = JSON.parse(raw);
             if (data && Array.isArray(data.pages) && data.pages.length > 0) {
@@ -190,6 +204,18 @@
 
                 const titleElem = getElem('project-title');
                 if (titleElem) titleElem.textContent = state.title;
+
+                if (data.updatedAt) {
+                    const d = new Date(data.updatedAt);
+                    const hours = String(d.getHours()).padStart(2, '0');
+                    const minutes = String(d.getMinutes()).padStart(2, '0');
+                    const seconds = String(d.getSeconds()).padStart(2, '0');
+                    const timeStr = `${hours}:${minutes}:${seconds}`;
+                    const badge = getElem('autosave-status-badge');
+                    if (badge) {
+                        badge.innerHTML = `<i class="fa-solid fa-cloud-check" style="font-size:12px; color:#10b981;"></i> ⚡ บันทึกแล้ว ${timeStr} น.`;
+                    }
+                }
                 return true;
             }
         } catch (e) {
@@ -231,6 +257,7 @@
         setupDeptModalEvents();
         setupIssueEvents();
         setupKeyboardShortcuts();
+        window.addEventListener('beforeunload', saveAutoSaveDataNow);
 
         saveHistoryState();
     }
