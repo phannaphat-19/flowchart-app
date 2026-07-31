@@ -1270,15 +1270,7 @@
         if (toAnchor === 'top' || toAnchor === 'bottom') endPt.x += offsetPx;
         else endPt.y += offsetPx;
 
-        let dPath;
-        if (fromAnchor === 'left' || fromAnchor === 'right') {
-            const midX = (startPt.x + endPt.x) / 2;
-            dPath = `M ${startPt.x},${startPt.y} H ${midX} V ${endPt.y} H ${endPt.x}`;
-        } else {
-            const midY = (startPt.y + endPt.y) / 2;
-            dPath = `M ${startPt.x},${startPt.y} V ${midY} H ${endPt.x} V ${endPt.y}`;
-        }
-
+        const dPath = generateSmartOrthogonalPath(startPt, endPt, fromAnchor, toAnchor);
         return { d: dPath, startPt, endPt };
     }
 
@@ -2811,14 +2803,41 @@
         if (groupConnections) groupConnections.appendChild(g);
     }
 
+    function generateSmartOrthogonalPath(start, end, fromAnchor = 'right', toAnchor = 'left') {
+        const fromIsH = (fromAnchor === 'left' || fromAnchor === 'right');
+        const toIsH = (toAnchor === 'left' || toAnchor === 'right');
+
+        if (fromIsH && toIsH) {
+            if (fromAnchor !== toAnchor) {
+                const midX = (start.x + end.x) / 2;
+                return `M ${start.x},${start.y} H ${midX} V ${end.y} H ${end.x}`;
+            } else {
+                const extraX = fromAnchor === 'right' ? Math.max(start.x, end.x) + 40 : Math.min(start.x, end.x) - 40;
+                return `M ${start.x},${start.y} H ${extraX} V ${end.y} H ${end.x}`;
+            }
+        } else if (!fromIsH && !toIsH) {
+            if (fromAnchor !== toAnchor) {
+                const midY = (start.y + end.y) / 2;
+                return `M ${start.x},${start.y} V ${midY} H ${end.x} V ${end.y}`;
+            } else {
+                const extraY = fromAnchor === 'bottom' ? Math.max(start.y, end.y) + 40 : Math.min(start.y, end.y) - 40;
+                return `M ${start.x},${start.y} V ${extraY} H ${end.x} V ${end.y}`;
+            }
+        } else if (fromIsH && !toIsH) {
+            return `M ${start.x},${start.y} H ${end.x} V ${end.y}`;
+        } else {
+            return `M ${start.x},${start.y} V ${end.y} H ${end.x}`;
+        }
+    }
+
     function calculatePathD(start, end, style, fromAnchor, toAnchor) {
         if (style === 'straight') {
             return `M ${start.x} ${start.y} L ${end.x} ${end.y}`;
         }
 
         if (style === 'bezier') {
-            let dx = (end.x - start.x) / 2;
-            let dy = (end.y - start.y) / 2;
+            let dx = Math.abs(end.x - start.x) / 2 || 40;
+            let dy = Math.abs(end.y - start.y) / 2 || 40;
             let cx1 = start.x + (fromAnchor === 'right' ? dx : fromAnchor === 'left' ? -dx : 0);
             let cy1 = start.y + (fromAnchor === 'bottom' ? dy : fromAnchor === 'top' ? -dy : 0);
             let cx2 = end.x + (toAnchor === 'left' ? -dx : toAnchor === 'right' ? dx : 0);
@@ -2826,12 +2845,7 @@
             return `M ${start.x} ${start.y} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${end.x} ${end.y}`;
         }
 
-        const midX = (start.x + end.x) / 2;
-        if (fromAnchor === 'top' || fromAnchor === 'bottom') {
-            const midY = (start.y + end.y) / 2;
-            return `M ${start.x} ${start.y} L ${start.x} ${midY} L ${end.x} ${midY} L ${end.x} ${end.y}`;
-        }
-        return `M ${start.x} ${start.y} L ${midX} ${start.y} L ${midX} ${end.y} L ${end.x} ${end.y}`;
+        return generateSmartOrthogonalPath(start, end, fromAnchor || 'right', toAnchor || 'left');
     }
 
     function getPathMidPoint(p1, p2) {
