@@ -994,13 +994,13 @@
             }
         }
 
-        const cleanTitle = node.text ? node.text.replace(/\n/g, ' ') : 'กล่องกระบวนการ';
+        const cleanTitle = (node.details?.subflowTitle || node.text) ? (node.details?.subflowTitle || node.text).replace(/\n/g, ' ') : 'กล่องกระบวนการ';
         const titleElem = getElem('modal-node-title');
         if (titleElem) titleElem.textContent = cleanTitle;
 
         renderOriginalBoxPreview(node);
         const leftText = getElem('modal-left-text');
-        if (leftText) leftText.value = node.text || '';
+        if (leftText) leftText.value = node.details?.subflowTitle || node.text || '';
 
         const descText = getElem('modal-desc');
         if (descText) descText.value = node.details.desc || '';
@@ -2049,25 +2049,21 @@
             modalLeftText.addEventListener('input', () => {
                 const node = subflowModalStack[0];
                 if (node) {
-                    node.text = modalLeftText.value;
+                    if (!node.details) node.details = {};
+                    node.details.subflowTitle = modalLeftText.value;
                     const titleElem = getElem('modal-node-title');
-                    if (titleElem) titleElem.textContent = node.text.replace(/\n/g, ' ') || 'กล่องกระบวนการ';
-                    renderOriginalBoxPreview(node);
-                    renderCanvas();
+                    if (titleElem) titleElem.textContent = (node.details.subflowTitle || node.text || '').replace(/\n/g, ' ') || 'กล่องกระบวนการ';
                 }
             });
         }
-
-
-
-
 
         if (btnSave) {
             btnSave.addEventListener('click', () => {
                 const rootNode = subflowModalStack[0];
                 if (rootNode) {
+                    if (!rootNode.details) rootNode.details = {};
                     const modalLeftText = getElem('modal-left-text');
-                    if (modalLeftText) rootNode.text = modalLeftText.value;
+                    if (modalLeftText) rootNode.details.subflowTitle = modalLeftText.value;
                 }
                 if (activeSubflowCurrentNode) {
                     const modalDesc = getElem('modal-desc');
