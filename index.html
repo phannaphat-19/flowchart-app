@@ -13,7 +13,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <link rel="stylesheet" href="style.css?v=20260731_v10009">
+    <link rel="stylesheet" href="style.css?v=20260731_v10010">
 
     <style>
     #group-connections path,
@@ -535,9 +535,15 @@
                                     <label>สีเส้นขอบ</label>
                                     <input type="color" id="subnode-border-color" value="#4f46e5">
                                 </div>
-                                <div class="subnode-input-group" style="flex: 1;">
-                                    <label>ข้อความย่อย</label>
-                                    <input type="text" id="subnode-text-input" placeholder="พิมพ์ข้อความย่อย...">
+                                <div class="subnode-input-group">
+                                    <label><i class="fa-solid fa-font"></i> ข้อความย่อย</label>
+                                    <input type="text" id="subnode-text-input" placeholder="พิมพ์ข้อความในกล่องย่อย...">
+                                </div>
+                                <div class="subnode-input-group">
+                                    <label style="color:#0284c7; font-weight:700;"><i class="fa-solid fa-link"></i> 🔗 เชื่อมเส้นไปกล่อง:</label>
+                                    <select id="subnode-connect-select" style="border-color:#0284c7; font-weight:600; background:#f0f9ff;">
+                                        <option value="">-- เลือกกล่องปลายทาง --</option>
+                                    </select>
                                 </div>
                                 <button id="btn-subnode-nest-flow" class="btn-primary-sm" style="align-self: flex-end; background: linear-gradient(135deg, #0ea5e9, #6366f1);" title="สร้างและเจาะลึกผังย่อยลึกลงไปอีกขั้น (Nested Sub-Flowchart)">
                                     <i class="fa-solid fa-folder-tree"></i> 🔍 ทำผังย่อยซ้อนย่อย (Sub-Flow)
@@ -689,6 +695,6 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="script.js?v=20260731_v10009"></script>
+    <script src="script.js?v=20260731_v10010"></script>
 </body>
 </html>

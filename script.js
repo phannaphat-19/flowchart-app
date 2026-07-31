@@ -1150,18 +1150,17 @@
         if (connectSelect) {
             connectSelect.addEventListener('change', () => {
                 const targetId = connectSelect.value;
-                if (targetId && state.selectedItem?.type === 'node' && selectedSubNodeId) {
-                    const node = getCurrentPage().nodes.find(n => n.id === state.selectedItem.id);
-                    if (node) {
-                        if (!node.details.subConns) node.details.subConns = [];
-                        // Check if connection already exists
-                        const exists = node.details.subConns.some(c => c.from === selectedSubNodeId && c.to === targetId);
-                        if (!exists) {
-                            node.details.subConns.push({ from: selectedSubNodeId, to: targetId, text: '' });
-                        }
-                        connectSelect.value = '';
-                        renderLargeSubFlowchartSVG(node);
+                const node = activeSubflowCurrentNode || (subflowModalStack.length > 0 ? subflowModalStack[subflowModalStack.length - 1] : null);
+                if (targetId && node && selectedSubNodeId) {
+                    if (!node.details) node.details = { desc: '', steps: '', owner: '', docs: '', issues: [], subNodes: [], subConns: [] };
+                    if (!node.details.subConns) node.details.subConns = [];
+                    const exists = node.details.subConns.some(c => c.from === selectedSubNodeId && c.to === targetId);
+                    if (!exists) {
+                        node.details.subConns.push({ from: selectedSubNodeId, to: targetId, text: '' });
+                        saveHistoryState();
                     }
+                    connectSelect.value = '';
+                    renderLargeSubFlowchartSVG(node);
                 }
             });
         }
