@@ -2496,6 +2496,7 @@
         const d = calculatePathD(fromPos, toPos, conn.style || 'orthogonal', conn.fromAnchor, conn.toAnchor);
         
         path.setAttribute('d', d);
+        path.setAttribute('fill', 'none');
         path.setAttribute('class', `flow-connection ${isSelected ? 'selected' : ''}`);
         path.setAttribute('stroke', isSelected ? '#4f46e5' : (conn.color || '#475569'));
         path.setAttribute('stroke-width', conn.width || 2);

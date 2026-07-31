@@ -1686,8 +1686,15 @@ input[type="color"] {
 }
 
 /* Connection Paths */
+#group-connections path,
+#temp-connection,
+.flow-connection,
+.issue-link-group path {
+    fill: none !important;
+}
+
 .flow-connection {
-    fill: none;
+    fill: none !important;
     stroke-linecap: round;
     cursor: pointer;
 }
