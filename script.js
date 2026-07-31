@@ -1291,7 +1291,7 @@
             toAnchor = Math.abs(dx) >= Math.abs(dy) ? (dx > 0 ? 'left' : 'right') : (dy > 0 ? 'top' : 'bottom');
         }
 
-        const step = 20;
+        const step = 40;
         const offsetPx = (connIndexInPair - (totalConnsInPair - 1) / 2) * step;
 
         let startPt = { ...fromAnchors[fromAnchor] };
@@ -1465,12 +1465,23 @@
                 svg.appendChild(path);
 
                 if (conn.text) {
+                    let ratio = 0.5;
+                    if (totalInPair > 1) {
+                        if (idxInPair === 0) ratio = 0.32;
+                        else if (idxInPair === 1) ratio = 0.68;
+                        else if (idxInPair === 2) ratio = 0.50;
+                        else ratio = 0.25 + ((idxInPair * 0.2) % 0.6);
+                    }
+                    const textX = route.startPt.x + (route.endPt.x - route.startPt.x) * ratio;
+                    const textY = route.startPt.y + (route.endPt.y - route.startPt.y) * ratio;
+
                     const txtYes = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                    txtYes.setAttribute('x', (route.startPt.x + route.endPt.x) / 2 + 10);
-                    txtYes.setAttribute('y', (route.startPt.y + route.endPt.y) / 2 - 10);
+                    txtYes.setAttribute('x', textX);
+                    txtYes.setAttribute('y', textY);
                     txtYes.setAttribute('font-size', '11px');
                     txtYes.setAttribute('fill', '#10b981');
                     txtYes.setAttribute('font-weight', 'bold');
+                    txtYes.setAttribute('text-anchor', 'middle');
                     txtYes.textContent = conn.text;
                     svg.appendChild(txtYes);
                 }
@@ -2575,7 +2586,7 @@
         let toPos = { ...getAnchorPositions(toNode)[conn.toAnchor || 'left'] };
 
         if (totalInPair > 1) {
-            const step = 20;
+            const step = 40;
             const offsetPx = (idxInPair - (totalInPair - 1) / 2) * step;
             const fromAnchor = conn.fromAnchor || 'right';
             const toAnchor = conn.toAnchor || 'left';
@@ -2615,7 +2626,14 @@
         g.appendChild(path);
 
         if (conn.text) {
-            const midPoint = getPathMidPoint(fromPos, toPos);
+            let ratio = 0.5;
+            if (totalInPair > 1) {
+                if (idxInPair === 0) ratio = 0.32;
+                else if (idxInPair === 1) ratio = 0.68;
+                else if (idxInPair === 2) ratio = 0.50;
+                else ratio = 0.25 + ((idxInPair * 0.2) % 0.6);
+            }
+            const midPoint = getPathMidPoint(fromPos, toPos, ratio);
 
             const bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
             bgRect.setAttribute('class', 'connection-label-bg');
@@ -2690,10 +2708,10 @@
         return generateSmartOrthogonalPath(start, end, fromAnchor || 'right', toAnchor || 'left');
     }
 
-    function getPathMidPoint(p1, p2) {
+    function getPathMidPoint(p1, p2, ratio = 0.5) {
         return {
-            x: (p1.x + p2.x) / 2,
-            y: (p1.y + p2.y) / 2
+            x: p1.x + (p2.x - p1.x) * ratio,
+            y: p1.y + (p2.y - p1.y) * ratio
         };
     }
 
