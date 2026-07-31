@@ -2595,35 +2595,55 @@
         resizeHandle.setAttribute('title', 'ดึงเพื่อย่อ-ขยายขนาดกล่อง (Drag to Resize Box)');
         g.appendChild(resizeHandle);
 
-        // RED / YELLOW / GREEN FLAG BADGE ON CANVAS NODE (for process boxes)
+        // RED / YELLOW / GREEN FLAG BADGES ON CANVAS NODE (Multi-level cluster)
         if (!node.type.startsWith('issue-')) {
             const issues = node.details?.issues || [];
             if (issues.length > 0) {
-                const hasRed = issues.some(i => i.flag === 'red');
-                const hasYellow = issues.some(i => i.flag === 'yellow');
-                const flagColor = hasRed ? '#ef4444' : hasYellow ? '#f59e0b' : '#10b981';
+                const redCount = issues.filter(i => i.flag === 'red').length;
+                const yellowCount = issues.filter(i => i.flag === 'yellow').length;
+                const greenCount = issues.filter(i => i.flag === 'green').length;
 
-                const flagBadgeGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-                flagBadgeGroup.setAttribute('transform', `translate(${w - 14}, 12)`);
-                flagBadgeGroup.setAttribute('style', 'cursor: pointer;');
+                const badgeItems = [];
+                if (redCount > 0) badgeItems.push({ count: redCount, color: '#ef4444', title: `Red Flag (วิกฤต): ${redCount} รายการ` });
+                if (yellowCount > 0) badgeItems.push({ count: yellowCount, color: '#f59e0b', title: `Yellow Flag (เฝ้าระวัง): ${yellowCount} รายการ` });
+                if (greenCount > 0) badgeItems.push({ count: greenCount, color: '#10b981', title: `Green Flag (ผ่าน): ${greenCount} รายการ` });
 
-                const flagBg = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-                flagBg.setAttribute('r', 10);
-                flagBg.setAttribute('fill', flagColor);
-                flagBg.setAttribute('stroke', '#ffffff');
-                flagBg.setAttribute('stroke-width', '1.5');
-                flagBadgeGroup.appendChild(flagBg);
+                const badgeRadius = 9.5;
+                const badgeSpacing = 21;
 
-                const flagTxt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                flagTxt.setAttribute('font-size', '9px');
-                flagTxt.setAttribute('fill', '#ffffff');
-                flagTxt.setAttribute('font-weight', 'bold');
-                flagTxt.setAttribute('text-anchor', 'middle');
-                flagTxt.setAttribute('dominant-baseline', 'central');
-                flagTxt.textContent = `🚩${issues.length}`;
-                flagBadgeGroup.appendChild(flagTxt);
+                badgeItems.forEach((bItem, bIdx) => {
+                    const posX = w - 12 - (badgeItems.length - 1 - bIdx) * badgeSpacing;
 
-                g.appendChild(flagBadgeGroup);
+                    const flagBadgeGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                    flagBadgeGroup.setAttribute('transform', `translate(${posX}, 12)`);
+                    flagBadgeGroup.setAttribute('style', 'cursor: pointer;');
+                    flagBadgeGroup.setAttribute('title', bItem.title);
+
+                    const flagBg = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    flagBg.setAttribute('r', badgeRadius);
+                    flagBg.setAttribute('fill', bItem.color);
+                    flagBg.setAttribute('stroke', '#ffffff');
+                    flagBg.setAttribute('stroke-width', '1.5');
+                    flagBadgeGroup.appendChild(flagBg);
+
+                    const flagTxt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    flagTxt.setAttribute('font-size', '9px');
+                    flagTxt.setAttribute('fill', '#ffffff');
+                    flagTxt.setAttribute('font-weight', 'bold');
+                    flagTxt.setAttribute('text-anchor', 'middle');
+                    flagTxt.setAttribute('dominant-baseline', 'central');
+                    flagTxt.textContent = `${bItem.count}`;
+                    flagBadgeGroup.appendChild(flagTxt);
+
+                    flagBadgeGroup.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        selectItem('node', node.id);
+                        openSubflowModal(node);
+                    });
+
+                    g.appendChild(flagBadgeGroup);
+                });
             }
 
             // Info Badge
