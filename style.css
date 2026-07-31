@@ -1721,3 +1721,22 @@ input[type="color"] {
     text-anchor: middle;
     dominant-baseline: middle;
 }
+
+/* ==========================================================================
+   Animated Flowing Connection Lines Effect
+   ========================================================================== */
+@keyframes lineFlowAnim {
+    0% {
+        stroke-dashoffset: 28;
+    }
+    100% {
+        stroke-dashoffset: 0;
+    }
+}
+
+.flowing-line,
+.flow-connection.flowing-line,
+.subflow-conn-path.flowing-line {
+    stroke-dasharray: 8 6 !important;
+    animation: lineFlowAnim 0.7s linear infinite !important;
+}

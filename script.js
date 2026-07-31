@@ -56,6 +56,38 @@
     let tempDepartments = [];
     let selectedSubNodeId = null;
     let showCanvasGrid = localStorage.getItem('flowstudio_show_grid') !== 'false';
+    let isLineFlowAnimated = localStorage.getItem('flowstudio_animate_lines') !== 'false';
+
+    function updateLineFlowDisplay() {
+        const headerFlowBtn = getElem('btn-toggle-flow-header');
+        const headerFlowText = getElem('flow-header-text');
+        const modalFlowBtn = getElem('btn-toggle-flow-modal');
+        const modalFlowText = getElem('flow-modal-text');
+
+        const labelText = isLineFlowAnimated ? 'เส้นไหล: เปิด' : 'เส้นไหล: ปิด';
+
+        if (headerFlowText) headerFlowText.textContent = labelText;
+        if (modalFlowText) modalFlowText.textContent = labelText;
+
+        if (headerFlowBtn) {
+            headerFlowBtn.style.background = isLineFlowAnimated ? 'linear-gradient(135deg, #06b6d4, #0891b2)' : 'linear-gradient(135deg, #64748b, #475569)';
+        }
+        if (modalFlowBtn) {
+            modalFlowBtn.style.borderColor = isLineFlowAnimated ? '#06b6d4' : '#94a3b8';
+            modalFlowBtn.style.color = isLineFlowAnimated ? '#0891b2' : '#64748b';
+        }
+
+        renderCanvas();
+        if (activeSubflowCurrentNode) {
+            renderLargeSubFlowchartSVG(activeSubflowCurrentNode);
+        }
+    }
+
+    function toggleLineFlowAnimation() {
+        isLineFlowAnimated = !isLineFlowAnimated;
+        localStorage.setItem('flowstudio_animate_lines', isLineFlowAnimated);
+        updateLineFlowDisplay();
+    }
 
     function updateGridDisplay() {
         const svgGrid = getElem('svg-grid');
@@ -188,6 +220,7 @@
         renderCanvas();
         updateUndoRedoUI();
         updateGridDisplay();
+        updateLineFlowDisplay();
         
         setupSidebarDragAndDrop();
         setupCanvasEvents();
@@ -1418,6 +1451,7 @@
                 const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                 path.setAttribute('d', route.d);
                 path.setAttribute('fill', 'none');
+                path.setAttribute('class', `subflow-conn-path ${isLineFlowAnimated ? 'flowing-line' : ''}`);
                 path.setAttribute('stroke', isConnSel ? '#06b6d4' : '#4f46e5');
                 path.setAttribute('stroke-width', isConnSel ? '3.5' : '2.2');
                 path.setAttribute('marker-end', 'url(#large-sub-arrow)');
@@ -1795,6 +1829,11 @@
                 e.stopPropagation();
                 deleteSelectedSubConnItem();
             };
+        }
+
+        const btnToggleFlowModal = getElem('btn-toggle-flow-modal');
+        if (btnToggleFlowModal) {
+            btnToggleFlowModal.addEventListener('click', toggleLineFlowAnimation);
         }
 
         if (btnConnectSub) {
@@ -2565,7 +2604,7 @@
         
         path.setAttribute('d', d);
         path.setAttribute('fill', 'none');
-        path.setAttribute('class', `flow-connection ${isSelected ? 'selected' : ''}`);
+        path.setAttribute('class', `flow-connection ${isSelected ? 'selected' : ''} ${isLineFlowAnimated ? 'flowing-line' : ''}`);
         path.setAttribute('stroke', isSelected ? '#4f46e5' : (conn.color || '#475569'));
         path.setAttribute('stroke-width', conn.width || 2);
         if (conn.dash && conn.dash !== 'none') {
@@ -3707,6 +3746,11 @@
                 localStorage.setItem('flowstudio_show_grid', showCanvasGrid);
                 updateGridDisplay();
             });
+        }
+
+        const btnToggleFlowHeader = getElem('btn-toggle-flow-header');
+        if (btnToggleFlowHeader) {
+            btnToggleFlowHeader.addEventListener('click', toggleLineFlowAnimation);
         }
 
         const btnToggleGrid = getElem('btn-toggle-grid');
