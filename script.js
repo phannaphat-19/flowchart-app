@@ -1477,31 +1477,82 @@
             txt.textContent = sn.text || 'ขั้นตอนย่อย';
             g.appendChild(txt);
 
-            // Highlight if this node is selected as connection source
-            if (subConnFromId === sn.id) {
+            // Highlight if this node is selected as connection source inside subflow modal
+            const isSubFirstConnect = subConnFromId === sn.id;
+            if (isSubFirstConnect) {
                 if (shape.tagName === 'rect' || shape.tagName === 'polygon' || shape.tagName === 'path') {
-                    shape.setAttribute('stroke', '#06b6d4');
+                    shape.setAttribute('stroke', '#0284c7');
                     shape.setAttribute('stroke-width', '3.5');
+                    shape.setAttribute('stroke-dasharray', '4,3');
+                } else if (shape.tagName === 'g') {
+                    const bgRect = shape.querySelector('rect');
+                    if (bgRect) {
+                        bgRect.setAttribute('stroke', '#0284c7');
+                        bgRect.setAttribute('stroke-width', '3.5');
+                        bgRect.setAttribute('stroke-dasharray', '4,3');
+                    }
                 }
             }
 
-            // Render Anchor Ports for connecting
+            // Render Anchor Ports for connecting inside subflow modal
+            const snW = sn.w || 130;
+            const snH = sn.h || 50;
             const anchorCoords = [
-                { x: sn.w / 2, y: 0 },
-                { x: sn.w, y: sn.h / 2 },
-                { x: sn.w / 2, y: sn.h },
-                { x: 0, y: sn.h / 2 }
+                { x: snW / 2, y: 0 },
+                { x: snW, y: snH / 2 },
+                { x: snW / 2, y: snH },
+                { x: 0, y: snH / 2 }
             ];
+
             anchorCoords.forEach(pt => {
                 const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('class', 'subnode-anchor');
                 circle.setAttribute('cx', pt.x);
                 circle.setAttribute('cy', pt.y);
-                circle.setAttribute('r', subConnectMode ? '5' : '3.5');
-                circle.setAttribute('fill', subConnFromId === sn.id ? '#06b6d4' : '#4f46e5');
-                circle.setAttribute('stroke', '#ffffff');
-                circle.setAttribute('stroke-width', '1.5');
-                circle.style.opacity = subConnectMode ? '1' : '0.4';
-                circle.style.cursor = 'pointer';
+                circle.setAttribute('r', '8');
+                circle.setAttribute('fill', '#ffffff');
+                circle.setAttribute('stroke', '#0284c7');
+                circle.setAttribute('stroke-width', '2.5');
+                circle.style.cursor = 'crosshair';
+                circle.style.transition = 'all 0.15s ease';
+                circle.setAttribute('title', 'คลิกจุดนี้เพื่อเชื่อมสายในป๊อปอัพ (Click to Connect Sub-Flow)');
+
+                circle.addEventListener('mouseenter', () => {
+                    circle.setAttribute('r', '11');
+                    circle.setAttribute('fill', '#0ea5e9');
+                    circle.setAttribute('stroke', '#ffffff');
+                });
+                circle.addEventListener('mouseleave', () => {
+                    circle.setAttribute('r', '8');
+                    circle.setAttribute('fill', '#ffffff');
+                    circle.setAttribute('stroke', '#0284c7');
+                });
+
+                circle.addEventListener('mousedown', (anchorEvt) => {
+                    anchorEvt.stopPropagation();
+                    if (!subConnFromId) {
+                        subConnFromId = sn.id;
+                        subConnectMode = true;
+                        const btnConnect = getElem('btn-connect-subnode');
+                        if (btnConnect) {
+                            btnConnect.style.background = '#0284c7';
+                            btnConnect.style.color = '#ffffff';
+                        }
+                        renderLargeSubFlowchartSVG(node);
+                    } else if (subConnFromId !== sn.id) {
+                        if (!node.details.subConns) node.details.subConns = [];
+                        node.details.subConns.push({ from: subConnFromId, to: sn.id, text: '' });
+                        subConnFromId = null;
+                        subConnectMode = false;
+                        const btnConnect = getElem('btn-connect-subnode');
+                        if (btnConnect) {
+                            btnConnect.style.background = '';
+                            btnConnect.style.color = '#0284c7';
+                        }
+                        renderLargeSubFlowchartSVG(node);
+                    }
+                });
+
                 g.appendChild(circle);
             });
 
