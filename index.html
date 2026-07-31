@@ -50,6 +50,44 @@
         setInterval(injectGridBtn, 300);
     })();
     </script>
+    <style>
+    .tool-btn {
+        padding: 6px 14px !important;
+        height: 38px !important;
+        width: auto !important;
+        gap: 6px !important;
+        font-size: 0.82rem !important;
+        font-weight: 600 !important;
+        white-space: nowrap !important;
+    }
+    .tool-btn span {
+        display: inline-block !important;
+        font-family: 'Prompt', 'IBM Plex Sans Thai', sans-serif !important;
+    }
+    </style>
+    <script>
+    (function() {
+        function fixToolbar() {
+            var sel = document.getElementById('tool-select');
+            if (sel && !sel.querySelector('span')) {
+                sel.innerHTML = '<i class="fa-solid fa-arrow-pointer"></i> <span>เลือก/ย้าย (Move)</span>';
+            }
+            var conn = document.getElementById('tool-connect');
+            if (conn && !conn.querySelector('span')) {
+                conn.innerHTML = '<i class="fa-solid fa-link"></i> <span>โยงเส้น (Connect)</span>';
+            }
+            var pan = document.getElementById('tool-pan');
+            if (pan && !pan.querySelector('span')) {
+                pan.innerHTML = '<i class="fa-solid fa-hand"></i> <span>มือจับเลื่อน (Pan)</span>';
+            }
+            var del = document.getElementById('btn-delete-selected');
+            if (del && !del.querySelector('span')) {
+                del.innerHTML = '<i class="fa-solid fa-trash-can"></i> <span>ลบที่เลือก (Delete)</span>';
+            }
+        }
+        setInterval(fixToolbar, 200);
+    })();
+    </script>
 </head>
 <body class="light-theme">
     <!-- Top Navigation Bar -->
