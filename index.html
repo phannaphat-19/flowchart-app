@@ -537,11 +537,55 @@
                             </div>
                         </div>
                         
-                        <!-- Ultra-Large Interactive SVG Canvas for Sub-Flowchart -->
-                        <div class="large-svg-container ultra-svg-container">
-                            <svg id="large-subflow-svg" viewBox="0 0 780 420" width="100%" height="420">
-                                <!-- Dynamic Sub-Flowchart SVG rendered here -->
-                            </svg>
+                        <!-- SUB-NODE COLOR & SHAPE CUSTOMIZER BAR -->
+                        <div id="subnode-customizer-bar" class="subnode-customizer-bar">
+                            <div class="subnode-customizer-title">
+                                <i class="fa-solid fa-palette"></i> ปรับสี & รูปทรงย่อยที่เลือก:
+                            </div>
+                            <div class="subnode-customizer-inputs">
+                                <div class="subnode-input-group">
+                                    <label>ประเภทรูปทรง</label>
+                                    <select id="subnode-shape-select">
+                                        <option value="process">กระบวนการ (Process)</option>
+                                        <option value="startend">เริ่ม-จบ (Start/End)</option>
+                                        <option value="decision">เงื่อนไข (Decision)</option>
+                                        <option value="inputoutput">รับ-แสดงผล (Input/Output)</option>
+                                        <option value="document">เอกสาร (Document)</option>
+                                        <option value="issue-red">🚩 การ์ดปัญหา Red Flag</option>
+                                        <option value="issue-green">🟩 การ์ดปัญหา Green Flag</option>
+                                    </select>
+                                </div>
+                                <div class="subnode-input-group">
+                                    <label>สีพื้นหลัง</label>
+                                    <input type="color" id="subnode-bg-color" value="#ffffff">
+                                </div>
+                                <div class="subnode-input-group">
+                                    <label>สีเส้นขอบ</label>
+                                    <input type="color" id="subnode-border-color" value="#4f46e5">
+                                </div>
+                                <div class="subnode-input-group" style="flex: 1;">
+                                    <label>ข้อความย่อย</label>
+                                    <input type="text" id="subnode-text-input" placeholder="พิมพ์ข้อความย่อย...">
+                                </div>
+                                <div class="subnode-input-group">
+                                    <label style="color:#0ea5e9; font-weight:700;"><i class="fa-solid fa-link"></i> เชื่อมเส้นไปกล่อง</label>
+                                    <select id="subnode-connect-select" style="border-color:#0ea5e9;">
+                                        <option value="">-- เลือกกล่องปลายทาง --</option>
+                                    </select>
+                                </div>
+                                <div class="subnode-input-group">
+                                    <label style="color:#ef4444; font-weight:700;"><i class="fa-solid fa-scissors"></i> ลบเส้นเชื่อม</label>
+                                    <select id="subnode-delete-conn-select" style="border-color:#fca5a5; color:#dc2626;">
+                                        <option value="">-- เลือกเส้นที่จะลบ --</option>
+                                    </select>
+                                </div>
+                                <button id="btn-subnode-delete-this" class="btn-subtool-sm danger" style="align-self: flex-end; padding: 7px 12px;" title="ลบกล่องย่อยที่เลือกนี้ทันที">
+                                    <i class="fa-solid fa-trash-can"></i> ลบกล่องนี้
+                                </button>
+                                <button id="btn-subnode-nest-flow" class="btn-primary-sm" style="align-self: flex-end; background: linear-gradient(135deg, #0ea5e9, #6366f1);" title="สร้างและเจาะลึกผังย่อยลึกลงไปอีกขั้น (Nested Sub-Flowchart)">
+                                    <i class="fa-solid fa-folder-tree"></i> 🔍 ทำผังย่อยซ้อนย่อย (Sub-Flow)
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

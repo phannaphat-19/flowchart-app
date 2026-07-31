@@ -178,7 +178,7 @@
     // --- INITIALIZATION ---
     function init() {
         // Dynamic DOM Purge for Right Inspector Subflow and Modal elements
-        ['btn-open-drawer', 'btn-open-inspector-subflow', 'node-link-page-group', 'modal-shared-flow-group', 'btn-modal-toggle-grid', 'subnode-customizer-bar'].forEach(id => {
+        ['btn-open-drawer', 'btn-open-inspector-subflow', 'node-link-page-group', 'modal-shared-flow-group', 'btn-modal-toggle-grid'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.remove();
         });
