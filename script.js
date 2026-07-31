@@ -828,40 +828,64 @@
     }
 
     function exportIssuesToCSV() {
-        let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-        csvContent += "#,ระดับปัญหา (Flag),หน้าผังงาน,กระบวนการ/ตำแหน่ง,ผู้รับผิดชอบ,รายละเอียดปัญหา\n";
+        const rows = [];
+        rows.push(["#", "ระดับปัญหา (Flag)", "หน้าผังงาน", "กระบวนการ/ตำแหน่ง", "ผู้รับผิดชอบ", "รายละเอียดปัญหา"]);
 
         let rowNum = 1;
         state.pages.forEach(page => {
             page.nodes.forEach(node => {
+                // 1. Main Canvas Issue Cards
                 if (node.type === 'issue-red' || node.type === 'issue-yellow' || node.type === 'issue-green') {
                     const flagName = node.type === 'issue-red' ? 'Red Flag (วิกฤต)' : node.type === 'issue-yellow' ? 'Yellow Flag (เฝ้าระวัง)' : 'Green Flag (ผ่าน)';
-                    const pageName = `"${page.name.replace(/"/g, '""')}"`;
-                    const nodeName = `"การ์ดปัญหาบนผัง (X:${Math.round(node.x)}, Y:${Math.round(node.y)})"`;
-                    const owner = `"${(node.details?.owner || 'ไม่ระบุ').replace(/"/g, '""')}"`;
-                    const text = `"${(node.text || 'การ์ดปัญหา').replace(/"/g, '""')}"`;
-                    csvContent += `${rowNum++},${flagName},${pageName},${nodeName},${owner},${text}\n`;
+                    const pageName = page.name || 'กระบวนการหลัก';
+                    const nodeName = `การ์ดปัญหาบนผัง (X:${Math.round(node.x)}, Y:${Math.round(node.y)})`;
+                    const owner = node.details?.owner || 'ระบุผู้รับผิดชอบ';
+                    const text = node.text || 'การ์ดปัญหา';
+                    rows.push([rowNum++, flagName, pageName, nodeName, owner, text]);
                 }
 
+                // 2. Main Node Issues List
                 const issues = node.details?.issues || [];
                 issues.forEach(issue => {
                     const flagName = issue.flag === 'red' ? 'Red Flag (วิกฤต)' : issue.flag === 'yellow' ? 'Yellow Flag (เฝ้าระวัง)' : 'Green Flag (ผ่าน)';
-                    const pageName = `"${page.name.replace(/"/g, '""')}"`;
-                    const nodeName = `"${(node.text || 'กระบวนการ').replace(/\n/g, ' ').replace(/"/g, '""')}"`;
-                    const owner = `"${(node.details?.owner || 'ไม่ระบุ').replace(/"/g, '""')}"`;
-                    const text = `"${issue.text.replace(/"/g, '""')}"`;
-                    csvContent += `${rowNum++},${flagName},${pageName},${nodeName},${owner},${text}\n`;
+                    const pageName = page.name || 'กระบวนการหลัก';
+                    const nodeName = (node.text || 'กระบวนการ').replace(/\n/g, ' ');
+                    const owner = node.details?.owner || 'ระบุผู้รับผิดชอบ';
+                    const text = issue.text || '';
+                    rows.push([rowNum++, flagName, pageName, nodeName, owner, text]);
+                });
+
+                // 3. Subflow Sub-node Issue Cards
+                const subNodes = node.details?.subNodes || [];
+                subNodes.forEach(sn => {
+                    if (sn.type === 'issue-red' || sn.type === 'issue-yellow' || sn.type === 'issue-green') {
+                        const flagName = sn.type === 'issue-red' ? 'Red Flag (วิกฤต)' : sn.type === 'issue-yellow' ? 'Yellow Flag (เฝ้าระวัง)' : 'Green Flag (ผ่าน)';
+                        const pageName = page.name || 'กระบวนการหลัก';
+                        const nodeName = `ผังย่อยของ [${(node.text || 'กระบวนการ').replace(/\n/g, ' ')}]`;
+                        const owner = node.details?.owner || 'ระบุผู้รับผิดชอบ';
+                        const text = sn.text || 'การ์ดปัญหาผังย่อย';
+                        rows.push([rowNum++, flagName, pageName, nodeName, owner, text]);
+                    }
                 });
             });
         });
 
-        const encodedUri = encodeURI(csvContent);
+        if (rows.length <= 1) {
+            alert('⚠️ ไม่พบรายการปัญหาในผังสำหรับส่งออกครับ');
+            return;
+        }
+
+        // Build UTF-8 CSV with BOM (\uFEFF) for Microsoft Excel compatibility
+        const csvString = rows.map(r => r.map(val => `"${String(val).replace(/"/g, '""')}"`).join(',')).join('\r\n');
+        const blob = new Blob(["\uFEFF" + csvString], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `สรุปรายงานปัญหา_${state.title.replace(/\s+/g, '_')}.csv`);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `สรุปรายการปัญหา_${(state.title || 'ผังงาน').replace(/\s+/g, '_')}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
 
     // --- CUSTOM DEPARTMENT MANAGER MODAL LOGIC ---
