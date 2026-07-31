@@ -1616,6 +1616,21 @@
         const btnBack = getElem('btn-modal-back');
         if (btnBack) btnBack.addEventListener('click', popSubflowModalBack);
 
+        if (btnConnectSub) {
+            btnConnectSub.addEventListener('click', () => {
+                subConnectMode = !subConnectMode;
+                subConnFromId = null;
+                if (subConnectMode) {
+                    btnConnectSub.style.background = '#0284c7';
+                    btnConnectSub.style.color = '#ffffff';
+                } else {
+                    btnConnectSub.style.background = '';
+                    btnConnectSub.style.color = '#0284c7';
+                }
+                if (activeSubflowCurrentNode) renderLargeSubFlowchartSVG(activeSubflowCurrentNode);
+            });
+        }
+
         const btnZoomIn = getElem('btn-subflow-zoom-in');
         const btnZoomOut = getElem('btn-subflow-zoom-out');
         const btnZoomReset = getElem('btn-subflow-zoom-reset');
@@ -1630,22 +1645,28 @@
             });
         }
 
+        function updateSubflowZoomUI() {
+            const zoomTxt = getElem('subflow-zoom-text');
+            if (zoomTxt) zoomTxt.textContent = `${Math.round(subflowModalZoom * 100)}%`;
+            if (activeSubflowCurrentNode) renderLargeSubFlowchartSVG(activeSubflowCurrentNode);
+        }
+
         if (btnZoomIn) {
             btnZoomIn.addEventListener('click', () => {
                 subflowModalZoom = Math.min(5.0, subflowModalZoom + 0.15);
-                if (activeSubflowCurrentNode) renderLargeSubFlowchartSVG(activeSubflowCurrentNode);
+                updateSubflowZoomUI();
             });
         }
         if (btnZoomOut) {
             btnZoomOut.addEventListener('click', () => {
                 subflowModalZoom = Math.max(0.3, subflowModalZoom - 0.15);
-                if (activeSubflowCurrentNode) renderLargeSubFlowchartSVG(activeSubflowCurrentNode);
+                updateSubflowZoomUI();
             });
         }
         if (btnZoomReset) {
             btnZoomReset.addEventListener('click', () => {
                 subflowModalZoom = 1.0;
-                if (activeSubflowCurrentNode) renderLargeSubFlowchartSVG(activeSubflowCurrentNode);
+                updateSubflowZoomUI();
             });
         }
         if (largeSvg) {
@@ -1656,7 +1677,7 @@
                 } else {
                     subflowModalZoom = Math.max(0.3, subflowModalZoom - 0.1);
                 }
-                if (activeSubflowCurrentNode) renderLargeSubFlowchartSVG(activeSubflowCurrentNode);
+                updateSubflowZoomUI();
             });
         }
 
