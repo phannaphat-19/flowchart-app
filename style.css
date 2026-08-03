@@ -43,19 +43,82 @@
     --glass-backdrop: blur(20px) saturate(180%);
 }
 
-/* Dark Mode Glassmorphism Options */
+/* Dark Mode Glassmorphism Options & Overrides */
 body.dark-theme {
     --bg-dark: #090d16;
-    --bg-panel: rgba(15, 23, 42, 0.82);
-    --bg-surface: rgba(30, 41, 59, 0.75);
+    --bg-panel: rgba(15, 23, 42, 0.88);
+    --bg-surface: rgba(30, 41, 59, 0.85);
     --bg-hover: rgba(51, 65, 85, 0.8);
-
     --text-main: #f8fafc;
     --text-muted: #94a3b8;
-
-    --border-color: rgba(51, 65, 85, 0.7);
+    --border-color: rgba(255, 255, 255, 0.12);
     --border-glass: rgba(255, 255, 255, 0.12);
-    --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.45);
+    background: linear-gradient(135deg, #090d16 0%, #0f172a 50%, #1e1b4b 100%) !important;
+    color: #f8fafc !important;
+}
+
+body.dark-theme .app-header {
+    background: rgba(15, 23, 42, 0.9) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+body.dark-theme .sidebar,
+body.dark-theme .inspector,
+body.dark-theme .sidebar-header,
+body.dark-theme .inspector-header,
+body.dark-theme .shape-category {
+    background: rgba(15, 23, 42, 0.88) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #f8fafc !important;
+}
+
+body.dark-theme .canvas-viewport {
+    background: #0b0f19 !important;
+}
+
+body.dark-theme .grid-dot {
+    fill: #475569 !important;
+    opacity: 0.6 !important;
+}
+
+body.dark-theme input,
+body.dark-theme select,
+body.dark-theme textarea {
+    background: rgba(30, 41, 59, 0.9) !important;
+    color: #f8fafc !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+body.dark-theme .modal-content {
+    background: #0f172a !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+    color: #f8fafc !important;
+}
+
+body.dark-theme .ultra-svg-container {
+    background: #090d16 !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+body.dark-theme .subnode-customizer-bar {
+    background: rgba(15, 23, 42, 0.92) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: #f8fafc !important;
+}
+
+body.dark-theme .icon-btn,
+body.dark-theme .icon-btn-sm,
+body.dark-theme .zoom-controls {
+    background: rgba(30, 41, 59, 0.7) !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+    color: #f8fafc !important;
+}
+
+body.dark-theme .icon-btn:hover:not(:disabled),
+body.dark-theme .icon-btn-sm:hover:not(:disabled) {
+    background: rgba(51, 65, 85, 0.9) !important;
+    color: #38bdf8 !important;
 }
 
 * {
