@@ -1437,7 +1437,7 @@
         const zoomText = getElem('subflow-zoom-text');
         if (zoomText) zoomText.textContent = `${Math.round(subflowModalZoom * 100)}%`;
 
-        if (!node.details.subNodes || !Array.isArray(node.details.subNodes)) {
+        if (!node.details.subNodes || !Array.isArray(node.details.subNodes) || node.details.subNodes.length === 0) {
             const rawSteps = node.details?.steps ? node.details.steps.split('\n').filter(s => s.trim()) : [];
             node.details.subNodes = [
                 { id: 'sub-1', type: 'startend', text: 'เริ่มขั้นตอนย่อย', x: 30, y: 50, w: 140, h: 50, bg: '#ecfeff', border: '#06b6d4' },
@@ -1911,7 +1911,8 @@
             // DOUBLE CLICK ON SUB-NODE TO DRILL DOWN INTO INFINITE POP-UP SUB-FLOWCHART!
             g.addEventListener('dblclick', (e) => {
                 e.stopPropagation();
-                if (!sn.details) sn.details = { desc: '', steps: '', owner: '', docs: '', issues: [], subNodes: [], subConns: [] };
+                if (sn.type.startsWith('issue-')) return;
+                if (!sn.details) sn.details = { desc: '', steps: '', owner: '', docs: '', issues: [], subNodes: null, subConns: null };
                 openSubflowModal(sn, true);
             });
 
