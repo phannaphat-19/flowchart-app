@@ -2274,7 +2274,6 @@
                     if (modalLeftText) {
                         const newTitle = modalLeftText.value.trim();
                         targetNode.details.subflowTitle = newTitle;
-                        if (newTitle) targetNode.text = newTitle;
                     }
 
                     const modalDesc = getElem('modal-desc');
