@@ -1437,7 +1437,7 @@
         const zoomText = getElem('subflow-zoom-text');
         if (zoomText) zoomText.textContent = `${Math.round(subflowModalZoom * 100)}%`;
 
-        if (!node.details.subNodes || !Array.isArray(node.details.subNodes) || node.details.subNodes.length === 0) {
+        if (node.details.subNodes === null || node.details.subNodes === undefined || !Array.isArray(node.details.subNodes)) {
             const rawSteps = node.details?.steps ? node.details.steps.split('\n').filter(s => s.trim()) : [];
             node.details.subNodes = [
                 { id: 'sub-1', type: 'startend', text: 'เริ่มขั้นตอนย่อย', x: 30, y: 50, w: 140, h: 50, bg: '#ecfeff', border: '#06b6d4' },
@@ -2251,20 +2251,23 @@
 
         if (btnSave) {
             btnSave.addEventListener('click', () => {
-                const rootNode = subflowModalStack[0];
-                if (rootNode) {
-                    if (!rootNode.details) rootNode.details = {};
+                const targetNode = activeSubflowCurrentNode || (subflowModalStack.length > 0 ? subflowModalStack[subflowModalStack.length - 1] : null);
+                if (targetNode) {
+                    if (!targetNode.details) targetNode.details = {};
                     const modalLeftText = getElem('modal-left-text');
-                    if (modalLeftText) rootNode.details.subflowTitle = modalLeftText.value;
-                }
-                if (activeSubflowCurrentNode) {
+                    if (modalLeftText) {
+                        const newTitle = modalLeftText.value.trim();
+                        targetNode.details.subflowTitle = newTitle;
+                        if (newTitle) targetNode.text = newTitle;
+                    }
+
                     const modalDesc = getElem('modal-desc');
                     const modalSteps = getElem('modal-steps');
                     const modalOwner = getElem('modal-owner');
 
-                    if (modalDesc) activeSubflowCurrentNode.details.desc = modalDesc.value.trim();
-                    if (modalSteps) activeSubflowCurrentNode.details.steps = modalSteps.value.trim();
-                    if (modalOwner) activeSubflowCurrentNode.details.owner = modalOwner.value.trim();
+                    if (modalDesc) targetNode.details.desc = modalDesc.value.trim();
+                    if (modalSteps) targetNode.details.steps = modalSteps.value.trim();
+                    if (modalOwner) targetNode.details.owner = modalOwner.value.trim();
                 }
                 closeSubflowModal();
                 renderCanvas();
