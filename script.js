@@ -652,7 +652,9 @@
                     if (!node.details.issues) node.details.issues = [];
 
                     const issueTextElem = getElem('modal-issue-input');
+                    const issueOwnerElem = getElem('modal-issue-owner-input');
                     const text = issueTextElem ? issueTextElem.value.trim() : '';
+                    const owner = issueOwnerElem ? issueOwnerElem.value.trim() : '';
                     if (!text) {
                         alert("กรุณาระบุรายละเอียดปัญหาที่พบ");
                         return;
@@ -664,7 +666,8 @@
                     const newIssue = {
                         id: `iss-${Date.now()}`,
                         flag: flagValue,
-                        text: text
+                        text: text,
+                        owner: owner
                     };
 
                     node.details.issues.push(newIssue);
@@ -676,6 +679,7 @@
                         id: `sub-iss-${Date.now()}`,
                         type: issueSubNodeType,
                         text: text,
+                        owner: owner,
                         x: 230 + Math.random() * 80,
                         y: 160 + Math.random() * 40,
                         w: 210,
@@ -685,6 +689,7 @@
                     });
 
                     if (issueTextElem) issueTextElem.value = '';
+                    if (issueOwnerElem) issueOwnerElem.value = '';
                     renderNodeIssueList(node);
                     renderLargeSubFlowchartSVG(node);
                     renderCanvas();
@@ -719,11 +724,13 @@
             card.className = `issue-item-card flag-${issue.flag}`;
 
             const flagIcon = issue.flag === 'red' ? '🚩 Red Flag' : issue.flag === 'yellow' ? '🚩 Yellow Flag' : '🟩 Green Flag';
+            const ownerText = issue.owner ? `<div style="font-size:0.65rem; color:#64748b; margin-top:3px;"><i class="fa-solid fa-user"></i> ${issue.owner}</div>` : '';
             
             card.innerHTML = `
                 <div style="flex:1;">
                     <div style="font-weight:700; font-size:0.72rem; opacity:0.9;">${flagIcon}</div>
                     <div style="margin-top:2px;">${issue.text}</div>
+                    ${ownerText}
                 </div>
             `;
 
@@ -807,7 +814,7 @@
                                 <td>${rowNum++}</td>
                                 <td><span class="flag-badge-pill ${flagBadgeClass}">${flagBadgeText}</span></td>
                                 <td><strong>${node.text ? node.text.replace(/\n/g, ' ') : 'กล่องกระบวนการ'}</strong><br><small style="color:var(--text-muted);">${page.name}</small></td>
-                                <td>${node.details?.owner || 'ไม่ระบุแผนก'}</td>
+                                <td>${issue.owner || node.details?.owner || 'ไม่ระบุแผนก'}</td>
                                 <td>${issueText}</td>
                             `;
                             tbody.appendChild(tr);
@@ -838,7 +845,7 @@
                                     <td>${rowNum++}</td>
                                     <td><span class="flag-badge-pill ${flagBadgeClass}">${flagBadgeText}</span></td>
                                     <td><strong>ผังย่อยของ [${node.text ? node.text.replace(/\n/g, ' ') : 'กระบวนการ'}]</strong><br><small style="color:var(--text-muted);">${page.name}</small></td>
-                                    <td>${node.details?.owner || 'ไม่ระบุแผนก'}</td>
+                                    <td>${sn.owner || node.details?.owner || 'ไม่ระบุแผนก'}</td>
                                     <td>${issueText}</td>
                                 `;
                                 tbody.appendChild(tr);
@@ -906,7 +913,7 @@
                         const flagName = flagType === 'red' ? 'Red Flag (วิกฤต)' : flagType === 'yellow' ? 'Yellow Flag (เฝ้าระวัง)' : 'Green Flag (ผ่าน)';
                         const pageName = page.name || 'กระบวนการหลัก';
                         const nodeName = (node.text || 'กระบวนการ').replace(/\n/g, ' ');
-                        const owner = node.details?.owner || 'ระบุผู้รับผิดชอบ';
+                        const owner = issue.owner || node.details?.owner || 'ระบุผู้รับผิดชอบ';
                         rows.push([rowNum++, flagName, pageName, nodeName, owner, issueText]);
                     }
                 });
@@ -923,7 +930,7 @@
                             const flagName = flagType === 'red' ? 'Red Flag (วิกฤต)' : flagType === 'yellow' ? 'Yellow Flag (เฝ้าระวัง)' : 'Green Flag (ผ่าน)';
                             const pageName = page.name || 'กระบวนการหลัก';
                             const nodeName = `ผังย่อยของ [${(node.text || 'กระบวนการ').replace(/\n/g, ' ')}]`;
-                            const owner = node.details?.owner || 'ระบุผู้รับผิดชอบ';
+                            const owner = sn.owner || node.details?.owner || 'ระบุผู้รับผิดชอบ';
                             rows.push([rowNum++, flagName, pageName, nodeName, owner, issueText]);
                         }
                     }
@@ -1073,6 +1080,9 @@
     // --- 3-COLUMN ULTRA-LARGE EDITABLE SUB-FLOWCHART MODAL ---
     let subflowModalStack = [];
     let subflowModalZoom = 1.0;
+    let subflowPan = { x: 0, y: 0 };
+    let isSubflowPanning = false;
+    let subflowPanStart = { x: 0, y: 0 };
     let activeSubflowCurrentNode = null;
 
     function openSubflowModal(node, isPushStack = true) {
@@ -1084,7 +1094,10 @@
         if (isPushStack) {
             if (subflowModalStack.length === 0 || subflowModalStack[subflowModalStack.length - 1] !== node) {
                 subflowModalStack.push(node);
+                subflowPan = { x: 0, y: 0 }; // Reset pan
             }
+        } else if (subflowModalStack.length === 0) {
+            subflowPan = { x: 0, y: 0 };
         }
 
         activeSubflowCurrentNode = node;
@@ -1258,17 +1271,15 @@
 
         if (btnDeleteThis) {
             btnDeleteThis.addEventListener('click', () => {
-                if (state.selectedItem?.type === 'node') {
-                    const node = getCurrentPage().nodes.find(n => n.id === state.selectedItem.id);
-                    if (node && node.details?.subNodes) {
-                        if (selectedSubNodeId) {
-                            node.details.subNodes = node.details.subNodes.filter(sn => sn.id !== selectedSubNodeId);
-                            node.details.subConns = (node.details.subConns || []).filter(sc => sc.from !== selectedSubNodeId && sc.to !== selectedSubNodeId);
-                            selectedSubNodeId = null;
-                            renderLargeSubFlowchartSVG(node);
-                        } else {
-                            alert('⚠️ กรุณาคลิกเลือกกล่องย่อยที่ต้องการลบก่อนครับ');
-                        }
+                const node = activeSubflowCurrentNode || (subflowModalStack.length > 0 ? subflowModalStack[subflowModalStack.length - 1] : null);
+                if (node && node.details?.subNodes) {
+                    if (selectedSubNodeId) {
+                        node.details.subNodes = node.details.subNodes.filter(sn => sn.id !== selectedSubNodeId);
+                        node.details.subConns = (node.details.subConns || []).filter(sc => sc.from !== selectedSubNodeId && sc.to !== selectedSubNodeId);
+                        selectedSubNodeId = null;
+                        renderLargeSubFlowchartSVG(node);
+                    } else {
+                        alert('⚠️ กรุณาคลิกเลือกกล่องย่อยที่ต้องการลบก่อนครับ');
                     }
                 }
             });
@@ -1277,16 +1288,14 @@
         if (deleteConnSelect) {
             deleteConnSelect.addEventListener('change', () => {
                 const connIdxStr = deleteConnSelect.value;
-                if (connIdxStr !== '' && state.selectedItem?.type === 'node') {
-                    const node = getCurrentPage().nodes.find(n => n.id === state.selectedItem.id);
-                    if (node && node.details?.subConns) {
-                        const idx = parseInt(connIdxStr, 10);
-                        if (!isNaN(idx) && idx >= 0 && idx < node.details.subConns.length) {
-                            node.details.subConns.splice(idx, 1);
-                            selectedSubConnIdx = -1;
-                            deleteConnSelect.value = '';
-                            renderLargeSubFlowchartSVG(node);
-                        }
+                const node = activeSubflowCurrentNode || (subflowModalStack.length > 0 ? subflowModalStack[subflowModalStack.length - 1] : null);
+                if (connIdxStr !== '' && node && node.details?.subConns) {
+                    const idx = parseInt(connIdxStr, 10);
+                    if (!isNaN(idx) && idx >= 0 && idx < node.details.subConns.length) {
+                        node.details.subConns.splice(idx, 1);
+                        selectedSubConnIdx = -1;
+                        deleteConnSelect.value = '';
+                        renderLargeSubFlowchartSVG(node);
                     }
                 }
             });
@@ -1309,14 +1318,12 @@
 
         if (shapeSelect) {
             shapeSelect.addEventListener('change', () => {
-                if (state.selectedItem?.type === 'node' && selectedSubNodeId) {
-                    const node = getCurrentPage().nodes.find(n => n.id === state.selectedItem.id);
-                    if (node && node.details?.subNodes) {
-                        const sn = node.details.subNodes.find(s => s.id === selectedSubNodeId);
-                        if (sn) {
-                            sn.type = shapeSelect.value;
-                            renderLargeSubFlowchartSVG(node);
-                        }
+                const node = activeSubflowCurrentNode || (subflowModalStack.length > 0 ? subflowModalStack[subflowModalStack.length - 1] : null);
+                if (node && selectedSubNodeId && node.details?.subNodes) {
+                    const sn = node.details.subNodes.find(s => s.id === selectedSubNodeId);
+                    if (sn) {
+                        sn.type = shapeSelect.value;
+                        renderLargeSubFlowchartSVG(node);
                     }
                 }
             });
@@ -1324,14 +1331,12 @@
 
         if (bgColor) {
             bgColor.addEventListener('input', () => {
-                if (state.selectedItem?.type === 'node' && selectedSubNodeId) {
-                    const node = getCurrentPage().nodes.find(n => n.id === state.selectedItem.id);
-                    if (node && node.details?.subNodes) {
-                        const sn = node.details.subNodes.find(s => s.id === selectedSubNodeId);
-                        if (sn) {
-                            sn.bg = bgColor.value;
-                            renderLargeSubFlowchartSVG(node);
-                        }
+                const node = activeSubflowCurrentNode || (subflowModalStack.length > 0 ? subflowModalStack[subflowModalStack.length - 1] : null);
+                if (node && selectedSubNodeId && node.details?.subNodes) {
+                    const sn = node.details.subNodes.find(s => s.id === selectedSubNodeId);
+                    if (sn) {
+                        sn.bg = bgColor.value;
+                        renderLargeSubFlowchartSVG(node);
                     }
                 }
             });
@@ -1339,14 +1344,12 @@
 
         if (borderColor) {
             borderColor.addEventListener('input', () => {
-                if (state.selectedItem?.type === 'node' && selectedSubNodeId) {
-                    const node = getCurrentPage().nodes.find(n => n.id === state.selectedItem.id);
-                    if (node && node.details?.subNodes) {
-                        const sn = node.details.subNodes.find(s => s.id === selectedSubNodeId);
-                        if (sn) {
-                            sn.border = borderColor.value;
-                            renderLargeSubFlowchartSVG(node);
-                        }
+                const node = activeSubflowCurrentNode || (subflowModalStack.length > 0 ? subflowModalStack[subflowModalStack.length - 1] : null);
+                if (node && selectedSubNodeId && node.details?.subNodes) {
+                    const sn = node.details.subNodes.find(s => s.id === selectedSubNodeId);
+                    if (sn) {
+                        sn.border = borderColor.value;
+                        renderLargeSubFlowchartSVG(node);
                     }
                 }
             });
@@ -1354,15 +1357,12 @@
 
         if (textInput) {
             textInput.addEventListener('input', () => {
-                if (state.selectedItem?.type === 'node' && selectedSubNodeId) {
-                    const node = getCurrentPage().nodes.find(n => n.id === state.selectedItem.id);
-                    if (node && node.details?.subNodes) {
-                        const sn = node.details.subNodes.find(s => s.id === selectedSubNodeId);
-                        if (sn) {
-                            sn.text = textInput.value;
-                            renderLargeSubFlowchartSVG(node);
-                            renderSubNodeCustomizer(node, sn);
-                        }
+                const node = activeSubflowCurrentNode || (subflowModalStack.length > 0 ? subflowModalStack[subflowModalStack.length - 1] : null);
+                if (node && selectedSubNodeId && node.details?.subNodes) {
+                    const sn = node.details.subNodes.find(s => s.id === selectedSubNodeId);
+                    if (sn) {
+                        sn.text = textInput.value;
+                        renderLargeSubFlowchartSVG(node);
                     }
                 }
             });
@@ -1423,13 +1423,11 @@
         const svg = getElem('large-subflow-svg');
         if (!svg) return;
         svg.innerHTML = '';
-
-        // Calculate ViewBox with Unlimited Zoom support
-        const baseW = 780;
-        const baseH = 420;
-        const vbW = baseW / subflowModalZoom;
-        const vbH = baseH / subflowModalZoom;
-        svg.setAttribute('viewBox', `0 0 ${vbW} ${vbH}`);
+        svg.style.width = '100%';
+        svg.style.height = '100%';
+        svg.removeAttribute('width');
+        svg.removeAttribute('height');
+        svg.removeAttribute('viewBox');
 
         const zoomText = getElem('subflow-zoom-text');
         if (zoomText) zoomText.textContent = `${Math.round(subflowModalZoom * 100)}%`;
@@ -1449,6 +1447,11 @@
                 { from: 'sub-3', to: 'sub-2', text: 'ไม่ผ่าน: แก้ไขใหม่', isLoopback: true }
             ];
         }
+
+        // Inner group that holds all content and applies pan & zoom transform (matches main canvas architecture)
+        const contentGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        contentGroup.setAttribute('id', 'subflow-content-group');
+        contentGroup.setAttribute('transform', `translate(${subflowPan.x}, ${subflowPan.y}) scale(${subflowModalZoom})`);
 
         // Marker Defs
         const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
@@ -1483,10 +1486,12 @@
 
         if (showCanvasGrid) {
             const gridRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-            gridRect.setAttribute('width', '100%');
-            gridRect.setAttribute('height', '100%');
+            gridRect.setAttribute('x', '-50000');
+            gridRect.setAttribute('y', '-50000');
+            gridRect.setAttribute('width', '100000');
+            gridRect.setAttribute('height', '100000');
             gridRect.setAttribute('fill', 'url(#subflow-grid-pattern)');
-            svg.appendChild(gridRect);
+            contentGroup.appendChild(gridRect);
         }
 
         // Count parallel connections between pairs for offset calculation
@@ -1528,14 +1533,14 @@
                     selectedSubNodeId = null;
                     renderLargeSubFlowchartSVG(node);
                 });
-                svg.appendChild(pathNo);
+                contentGroup.appendChild(pathNo);
 
                 if (conn.text) {
                     const txtNo = document.createElementNS('http://www.w3.org/2000/svg', 'text');
                     txtNo.setAttribute('x', (fromSN.x + toSN.x) / 2); txtNo.setAttribute('y', fromSN.y + fh + 24);
                     txtNo.setAttribute('font-size', '11px'); txtNo.setAttribute('fill', '#ef4444'); txtNo.setAttribute('font-weight', 'bold');
                     txtNo.textContent = conn.text;
-                    svg.appendChild(txtNo);
+                    contentGroup.appendChild(txtNo);
                 }
             } else {
                 const pairKey = [conn.from, conn.to].sort().join('::');
@@ -1558,7 +1563,7 @@
                     selectedSubNodeId = null;
                     renderLargeSubFlowchartSVG(node);
                 });
-                svg.appendChild(hitPath);
+                contentGroup.appendChild(hitPath);
 
                 const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                 path.setAttribute('d', route.d);
@@ -1574,7 +1579,7 @@
                     selectedSubNodeId = null;
                     renderLargeSubFlowchartSVG(node);
                 });
-                svg.appendChild(path);
+                contentGroup.appendChild(path);
 
                 if (conn.text) {
                     let ratio = 0.5;
@@ -1595,7 +1600,7 @@
                     txtYes.setAttribute('font-weight', 'bold');
                     txtYes.setAttribute('text-anchor', 'middle');
                     txtYes.textContent = conn.text;
-                    svg.appendChild(txtYes);
+                    contentGroup.appendChild(txtYes);
                 }
             }
         });
@@ -1817,8 +1822,8 @@
                         if (!isResizing) return;
                         const dw = moveEvt.clientX - startX;
                         const dh = moveEvt.clientY - startY;
-                        sn.w = Math.max(60, Math.min(600, origW + dw));
-                        sn.h = Math.max(35, Math.min(400, origH + dh));
+                        sn.w = Math.max(60, origW + dw / subflowModalZoom);
+                        sn.h = Math.max(35, origH + dh / subflowModalZoom);
                         renderLargeSubFlowchartSVG(node);
                     };
 
@@ -1872,16 +1877,17 @@
                 const startClientY = e.clientY;
                 const origX = sn.x;
                 const origY = sn.y;
-
+                
                 const onSubMouseMove = (moveEvent) => {
                     if (!isSubDragging) return;
-                    const dx = moveEvent.clientX - startClientX;
-                    const dy = moveEvent.clientY - startClientY;
-                    sn.x = Math.max(5, Math.min(640, origX + dx));
-                    sn.y = Math.max(5, Math.min(340, origY + dy));
+                    
+                    const dx = (moveEvent.clientX - startClientX) / subflowModalZoom;
+                    const dy = (moveEvent.clientY - startClientY) / subflowModalZoom;
 
+                    sn.x = origX + dx;
+                    sn.y = origY + dy;
+                    
                     g.setAttribute('transform', `translate(${sn.x}, ${sn.y})`);
-                    renderLargeSubFlowchartSVG(node);
                 };
 
                 const onSubMouseUp = () => {
@@ -1904,8 +1910,10 @@
                 openSubflowModal(sn, true);
             });
 
-            svg.appendChild(g);
+            contentGroup.appendChild(g);
         });
+
+        svg.appendChild(contentGroup);
     }
 
     function drillDownSubNodeToNestedFlow(parentNode, subNode) {
@@ -1964,6 +1972,7 @@
         const btnDelSub = getElem('btn-del-subnode');
         const btnSave = getElem('btn-save-subflow-modal');
         const btnJumpPage = getElem('btn-modal-jump-page');
+        const btnFullscreen = getElem('btn-modal-fullscreen');
 
         const modalSharedSelect = getElem('modal-shared-flow-select');
         if (modalSharedSelect) {
@@ -2115,10 +2124,35 @@
         if (btnZoomReset) {
             btnZoomReset.addEventListener('click', () => {
                 subflowModalZoom = 1.0;
+                subflowPan = { x: 0, y: 0 };
                 updateSubflowZoomUI();
             });
         }
         if (largeSvg) {
+            const svgContainer = document.querySelector('.ultra-svg-container');
+            if (svgContainer) {
+                svgContainer.style.cursor = 'grab';
+                svgContainer.addEventListener('mousedown', (e) => {
+                    // Start panning only if clicking on the background, not nodes (they stop propagation)
+                    isSubflowPanning = true;
+                    subflowPanStart = { x: e.clientX - subflowPan.x, y: e.clientY - subflowPan.y };
+                    svgContainer.style.cursor = 'grabbing';
+                });
+                window.addEventListener('mousemove', (e) => {
+                    if (isSubflowPanning) {
+                        subflowPan.x = e.clientX - subflowPanStart.x;
+                        subflowPan.y = e.clientY - subflowPanStart.y;
+                        if (activeSubflowCurrentNode) renderLargeSubFlowchartSVG(activeSubflowCurrentNode);
+                    }
+                });
+                window.addEventListener('mouseup', () => {
+                    if (isSubflowPanning) {
+                        isSubflowPanning = false;
+                        if (svgContainer) svgContainer.style.cursor = 'grab';
+                    }
+                });
+            }
+
             largeSvg.addEventListener('wheel', (e) => {
                 e.preventDefault();
                 if (e.deltaY < 0) {
@@ -2156,6 +2190,40 @@
         }
 
         if (btnClose) btnClose.addEventListener('click', closeSubflowModal);
+
+        if (btnFullscreen) {
+            btnFullscreen.addEventListener('click', () => {
+                const svgContainer = document.querySelector('.ultra-svg-container');
+                if (svgContainer) {
+                    if (!document.fullscreenElement) {
+                        svgContainer.style.backgroundColor = '#f8fafc'; // Add nice background for presentation
+                        if (svgContainer.requestFullscreen) {
+                            svgContainer.requestFullscreen();
+                        } else if (svgContainer.webkitRequestFullscreen) { /* Safari */
+                            svgContainer.webkitRequestFullscreen();
+                        } else if (svgContainer.msRequestFullscreen) { /* IE11 */
+                            svgContainer.msRequestFullscreen();
+                        }
+                    } else {
+                        if (document.exitFullscreen) {
+                            document.exitFullscreen();
+                        } else if (document.webkitExitFullscreen) { /* Safari */
+                            document.webkitExitFullscreen();
+                        } else if (document.msExitFullscreen) { /* IE11 */
+                            document.msExitFullscreen();
+                        }
+                    }
+                }
+            });
+            
+            // Revert background color when exiting fullscreen via Esc key
+            document.addEventListener('fullscreenchange', () => {
+                const svgContainer = document.querySelector('.ultra-svg-container');
+                if (svgContainer && !document.fullscreenElement) {
+                    svgContainer.style.backgroundColor = '';
+                }
+            });
+        }
 
         if (modalLeftText) {
             modalLeftText.addEventListener('input', () => {

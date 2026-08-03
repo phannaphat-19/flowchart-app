@@ -548,6 +548,9 @@
                                     <button id="btn-subflow-zoom-in" class="btn-subtool-sm" title="ซูมเข้า (+)"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
                                     <button id="btn-subflow-zoom-reset" class="btn-subtool-sm" title="รีเซ็ตซูม (100%)"><i class="fa-solid fa-rotate-left"></i></button>
                                 </div>
+                                <button id="btn-modal-fullscreen" class="btn-primary-sm" style="background: linear-gradient(135deg, #10b981, #059669);" title="ขยายผังย่อยเต็มจอเพื่อพรีเซนต์ (Fullscreen Presentation)">
+                                    <i class="fa-solid fa-expand"></i> พรีเซนต์เต็มจอ
+                                </button>
                                 <button id="btn-modal-jump-page" class="btn-primary-sm">
                                     <i class="fa-solid fa-up-right-from-square"></i> หน้าแก้ไขเต็ม
                                 </button>
@@ -556,7 +559,7 @@
                         
                         <!-- Ultra-Large Interactive SVG Canvas for Sub-Flowchart -->
                         <div class="large-svg-container ultra-svg-container">
-                            <svg id="large-subflow-svg" viewBox="0 0 780 420" width="100%" height="420">
+                            <svg id="large-subflow-svg" width="100%" height="100%">
                                 <!-- Dynamic Sub-Flowchart SVG rendered here -->
                             </svg>
                         </div>
@@ -630,7 +633,10 @@
                             <div class="form-group" style="margin-top: 8px;">
                                 <input type="text" id="modal-issue-input" placeholder="ระบุปัญหาที่พบในขั้นตอนนี้นำไปแปะบนผัง...">
                             </div>
-                            <button id="btn-add-issue" class="btn-primary-sm" style="width: 100%; justify-content: center;">
+                            <div class="form-group" style="margin-top: 4px;">
+                                <input type="text" id="modal-issue-owner-input" placeholder="ระบุผู้รับผิดชอบปัญหานี้ (เช่น แผนกขาย)">
+                            </div>
+                            <button id="btn-add-issue" class="btn-primary-sm" style="width: 100%; justify-content: center; margin-top: 8px;">
                                 <i class="fa-solid fa-plus-circle"></i> ➕ แปะปัญหาในขั้นตอนนี้นำไปแสดงผล
                             </button>
                         </div>
