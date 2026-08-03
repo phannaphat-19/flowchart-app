@@ -59,17 +59,50 @@ body.dark-theme {
 }
 
 body.dark-theme .app-header {
-    background: rgba(15, 23, 42, 0.9) !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    background: #0f172a !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
 }
 
 body.dark-theme .sidebar,
-body.dark-theme .inspector,
+body.dark-theme .inspector-panel,
 body.dark-theme .sidebar-header,
-body.dark-theme .inspector-header,
-body.dark-theme .shape-category {
-    background: rgba(15, 23, 42, 0.88) !important;
+body.dark-theme .panel-header,
+body.dark-theme .pages-bar,
+body.dark-theme .floating-toolbar {
+    background: #0f172a !important;
     border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #f8fafc !important;
+}
+
+body.dark-theme .page-tab {
+    background: rgba(30, 41, 59, 0.8) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #94a3b8 !important;
+}
+
+body.dark-theme .page-tab.active {
+    background: var(--primary) !important;
+    color: #ffffff !important;
+}
+
+body.dark-theme .shape-category {
+    background: #1e293b !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #f8fafc !important;
+}
+
+body.dark-theme .logo,
+body.dark-theme #project-title,
+body.dark-theme .sidebar h3,
+body.dark-theme .panel-header h3,
+body.dark-theme .category-title,
+body.dark-theme .help-tip,
+body.dark-theme .empty-msg,
+body.dark-theme label,
+body.dark-theme .tool-btn span,
+body.dark-theme #grid-header-text,
+body.dark-theme #flow-header-text,
+body.dark-theme #zoom-level {
     color: #f8fafc !important;
 }
 
