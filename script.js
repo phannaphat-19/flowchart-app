@@ -1226,6 +1226,7 @@
         const bgColor = getElem('subnode-bg-color');
         const borderColor = getElem('subnode-border-color');
         const textInput = getElem('subnode-text-input');
+        const fontSizeInput = getElem('subnode-fontsize-input');
         const connectSelect = getElem('subnode-connect-select');
         const deleteConnSelect = getElem('subnode-delete-conn-select');
 
@@ -1233,6 +1234,7 @@
         if (bgColor) bgColor.value = subNode.bg || '#ffffff';
         if (borderColor) borderColor.value = subNode.border || '#4f46e5';
         if (textInput) textInput.value = subNode.text || '';
+        if (fontSizeInput) fontSizeInput.value = subNode.fontSize || 11;
 
         // Populate Connect-To Dropdown
         if (connectSelect) {
@@ -1367,6 +1369,20 @@
                     const sn = node.details.subNodes.find(s => s.id === selectedSubNodeId);
                     if (sn) {
                         sn.text = textInput.value;
+                        renderLargeSubFlowchartSVG(node);
+                    }
+                }
+            });
+        }
+
+        const fontSizeInput = getElem('subnode-fontsize-input');
+        if (fontSizeInput) {
+            fontSizeInput.addEventListener('input', () => {
+                const node = activeSubflowCurrentNode || (subflowModalStack.length > 0 ? subflowModalStack[subflowModalStack.length - 1] : null);
+                if (node && selectedSubNodeId && node.details?.subNodes) {
+                    const sn = node.details.subNodes.find(s => s.id === selectedSubNodeId);
+                    if (sn) {
+                        sn.fontSize = Math.max(8, Math.min(36, parseInt(fontSizeInput.value) || 11));
                         renderLargeSubFlowchartSVG(node);
                     }
                 }
@@ -1692,7 +1708,7 @@
             const txtY = sn.type.startsWith('issue-') ? 38 : sn.h / 2;
             txt.setAttribute('x', sn.w / 2);
             txt.setAttribute('y', txtY);
-            txt.setAttribute('font-size', '11px');
+            txt.setAttribute('font-size', `${sn.fontSize || 11}px`);
             txt.setAttribute('font-weight', '600');
             txt.setAttribute('font-family', "'Prompt', 'IBM Plex Sans Thai', 'Sarabun', sans-serif");
             txt.setAttribute('fill', sn.type === 'issue-red' ? '#dc2626' : sn.type === 'issue-yellow' ? '#b45309' : sn.type === 'issue-green' ? '#047857' : '#0f172a');
