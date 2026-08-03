@@ -1108,15 +1108,20 @@
 
         const btnBack = getElem('btn-modal-back');
         const breadcrumbText = getElem('modal-breadcrumb-text');
-        if (btnBack && breadcrumbText) {
-            if (subflowModalStack.length > 1) {
-                btnBack.style.display = 'inline-flex';
-                const trail = subflowModalStack.map(n => n.text ? n.text.replace(/\n/g, ' ') : 'ขั้นตอนย่อย').join(' › ');
-                breadcrumbText.textContent = `🔍 เส้นทางผังย่อย: ${trail}`;
-            } else {
-                btnBack.style.display = 'none';
-                breadcrumbText.textContent = '🔍 ผังกระบวนการย่อยภายใน (ลากขยับรูปทรง & แปะป้าย Red/Green Flag ปัญหาได้ทันที)';
-            }
+        const fsBreadcrumbText = getElem('fullscreen-breadcrumb-text');
+        const fsBtnBack = getElem('btn-fullscreen-back');
+
+        if (subflowModalStack.length > 1) {
+            const trail = subflowModalStack.map(n => n.text ? n.text.replace(/\n/g, ' ') : 'ขั้นตอนย่อย').join(' › ');
+            if (btnBack) btnBack.style.display = 'inline-flex';
+            if (breadcrumbText) breadcrumbText.textContent = `🔍 เส้นทางผังย่อย: ${trail}`;
+            if (fsBreadcrumbText) fsBreadcrumbText.textContent = `${trail}`;
+            if (fsBtnBack) fsBtnBack.style.display = 'inline-flex';
+        } else {
+            if (btnBack) btnBack.style.display = 'none';
+            if (breadcrumbText) breadcrumbText.textContent = '🔍 ผังกระบวนการย่อยภายใน (ลากขยับรูปทรง & แปะป้าย RED/GREEN FLAG ปัญหาได้ทันที)';
+            if (fsBreadcrumbText) fsBreadcrumbText.textContent = node.text ? node.text.replace(/\n/g, ' ') : 'ขั้นตอนย่อย';
+            if (fsBtnBack) fsBtnBack.style.display = 'none';
         }
 
         const cleanTitle = (node.details?.subflowTitle || node.text) ? (node.details?.subflowTitle || node.text).replace(/\n/g, ' ') : 'กล่องกระบวนการ';
@@ -1989,6 +1994,12 @@
 
         const btnBack = getElem('btn-modal-back');
         if (btnBack) btnBack.addEventListener('click', popSubflowModalBack);
+
+        const btnFsBack = getElem('btn-fullscreen-back');
+        if (btnFsBack) btnFsBack.addEventListener('click', (e) => {
+            e.stopPropagation();
+            popSubflowModalBack();
+        });
 
         document.querySelectorAll('.btn-add-shape').forEach(btn => {
             btn.onclick = (e) => {

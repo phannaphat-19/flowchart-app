@@ -1303,6 +1303,59 @@ body {
     display: block;
 }
 
+/* Fullscreen Presentation Mode Overlay */
+.presentation-nav-overlay {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    z-index: 100;
+    display: none;
+    align-items: center;
+    gap: 12px;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(8px);
+    padding: 6px 16px;
+    border-radius: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    animation: fadeIn 0.25s ease-out;
+}
+
+.ultra-svg-container:fullscreen .presentation-nav-overlay,
+.ultra-svg-container:-webkit-full-screen .presentation-nav-overlay {
+    display: flex !important;
+}
+
+.btn-fullscreen-back {
+    background: #0284c7;
+    color: #ffffff;
+    border: none;
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.2s, transform 0.15s;
+}
+
+.btn-fullscreen-back:hover {
+    background: #0369a1;
+    transform: translateY(-1px);
+}
+
+.fullscreen-breadcrumb-text {
+    color: #f8fafc;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    max-width: 450px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .subnode-customizer-bar {
     background: rgba(255, 255, 255, 0.95);
     border: 1px solid #cbd5e1;
