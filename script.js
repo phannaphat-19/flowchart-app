@@ -2519,14 +2519,15 @@
 
             // Background Watermark Name Text
             const watermarkText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-            watermarkText.setAttribute('x', 240); // Shift slightly right of the header pill
+            watermarkText.setAttribute('x', 1000); // Centered around the main workspace width
             watermarkText.setAttribute('y', currentY + laneH / 2);
+            watermarkText.setAttribute('text-anchor', 'middle');
             watermarkText.setAttribute('dominant-baseline', 'central');
-            watermarkText.setAttribute('font-size', '68px');
+            watermarkText.setAttribute('font-size', '110px');
             watermarkText.setAttribute('font-weight', '800');
             watermarkText.setAttribute('font-family', "'Prompt', 'IBM Plex Sans Thai', 'Sarabun', sans-serif");
             watermarkText.setAttribute('fill', isDark ? '#ffffff' : '#0ea5e9'); // Sky blue for light, white for dark
-            watermarkText.setAttribute('fill-opacity', isDark ? '0.02' : '0.04'); // Very faint opacity
+            watermarkText.setAttribute('fill-opacity', isDark ? '0.04' : '0.065'); // Slightly more visible opacity
             watermarkText.setAttribute('style', 'pointer-events: none; user-select: none; letter-spacing: 2px;');
             watermarkText.textContent = dept.name;
             g.appendChild(watermarkText);
