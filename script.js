@@ -2441,6 +2441,9 @@
             resizerBar.setAttribute('title', 'คลิกลากเพื่อยืด/หดความสูงของชั้นแผนกนี้ (Drag to resize department height)');
 
             resizerBar.addEventListener('mousedown', (e) => {
+                const isPresentation = document.body.classList.contains('presentation-mode');
+                if (isPresentation) return;
+
                 e.stopPropagation();
                 let isResizingDept = true;
                 const startY = e.clientY;
@@ -3132,6 +3135,12 @@
         let movedPx = 0;
 
         gElem.addEventListener('mousedown', (e) => {
+            const isPresentation = document.body.classList.contains('presentation-mode');
+            if (isPresentation) {
+                // Let the event bubble up to canvas-viewport so it starts panning!
+                return;
+            }
+
             if (e.target.classList.contains('node-anchor') || state.currentTool === 'connect') {
                 const anchorPos = e.target.getAttribute('data-anchor') || 'right';
                 startConnectionDrag(node.id, anchorPos, e);
@@ -3882,7 +3891,8 @@
 
         if (canvasViewport) {
             canvasViewport.addEventListener('mousedown', (e) => {
-                if (state.currentTool === 'pan' || e.button === 1) {
+                const isPresentation = document.body.classList.contains('presentation-mode');
+                if (state.currentTool === 'pan' || e.button === 1 || isPresentation) {
                     state.isPanning = true;
                     state.panStart = { x: e.clientX - state.pan.x, y: e.clientY - state.pan.y };
                     canvasViewport.classList.add('panning');
