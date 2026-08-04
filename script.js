@@ -4311,18 +4311,135 @@
             });
         }
 
+        function exportSVGToPNG(svg, filename) {
+            try {
+                const bbox = svg.getBBox();
+                const padding = 40;
+                let x = bbox.x, y = bbox.y, width = bbox.width, height = bbox.height;
+                if (width <= 0 || height <= 0) {
+                    x = 0; y = 0; width = 800; height = 600;
+                } else {
+                    x = Math.max(0, x - padding);
+                    y = Math.max(0, y - padding);
+                    width += padding * 2;
+                    height += padding * 2;
+                }
+
+                const clonedSvg = svg.cloneNode(true);
+                clonedSvg.setAttribute('viewBox', `${x} ${y} ${width} ${height}`);
+                clonedSvg.setAttribute('width', width);
+                clonedSvg.setAttribute('height', height);
+
+                // Remove background grid rects
+                const gridRects = clonedSvg.querySelectorAll('rect[fill^="url(#"]');
+                gridRects.forEach(r => r.remove());
+
+                // Set nice background color
+                const isDark = document.body.classList.contains('dark-theme');
+                const bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                bgRect.setAttribute('x', x);
+                bgRect.setAttribute('y', y);
+                bgRect.setAttribute('width', width);
+                bgRect.setAttribute('height', height);
+                bgRect.setAttribute('fill', isDark ? '#0b0f19' : '#f8fafc');
+                clonedSvg.insertBefore(bgRect, clonedSvg.firstChild);
+
+                // Inject font family rules for standalone image rendering
+                const styleElement = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+                styleElement.textContent = `
+                    text {
+                        font-family: 'Prompt', 'IBM Plex Sans Thai', 'Sarabun', sans-serif !important;
+                    }
+                    .node-title, .node-text, .dept-header-text, .connection-text, .subflow-text {
+                        font-family: 'Prompt', 'IBM Plex Sans Thai', 'Sarabun', sans-serif !important;
+                    }
+                `;
+                clonedSvg.appendChild(styleElement);
+
+                const serializer = new XMLSerializer();
+                const svgString = serializer.serializeToString(clonedSvg);
+                const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+                const url = URL.createObjectURL(svgBlob);
+
+                const image = new Image();
+                image.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const scale = 2; // HD Crisp Quality
+                    canvas.width = width * scale;
+                    canvas.height = height * scale;
+
+                    const ctx = canvas.getContext('2d');
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = 'high';
+                    ctx.scale(scale, scale);
+
+                    ctx.drawImage(image, 0, 0, width, height);
+
+                    const pngUrl = canvas.toDataURL('image/png');
+                    const link = document.createElement('a');
+                    link.download = filename;
+                    link.href = pngUrl;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+
+                    URL.revokeObjectURL(url);
+                };
+
+                image.onerror = (err) => {
+                    console.error('Image render failed, falling back to raw SVG', err);
+                    alert('⚠️ เกิดข้อผิดพลาดทางเทคนิคในการแปลงรูปภาพ ระบบจะดาวน์โหลดเป็นไฟล์เวกเตอร์ (.svg) ให้แทนครับ');
+                    downloadSVGDirect(svg, filename.replace('.png', '.svg'));
+                };
+
+                image.src = url;
+            } catch (e) {
+                console.error(e);
+                alert('⚠️ ระบบส่งออกขัดข้องเนื่องจากเบราว์เซอร์บล็อกการทํางานบางส่วน จะทำการดาวน์โหลดเป็นไฟล์เวกเตอร์แทนครับ');
+                downloadSVGDirect(svg, filename.replace('.png', '.svg'));
+            }
+        }
+
+        function downloadSVGDirect(svg, filename) {
+            const bbox = svg.getBBox();
+            const padding = 40;
+            let x = bbox.x, y = bbox.y, width = bbox.width, height = bbox.height;
+            if (width <= 0 || height <= 0) {
+                x = 0; y = 0; width = 800; height = 600;
+            } else {
+                x = Math.max(0, x - padding);
+                y = Math.max(0, y - padding);
+                width += padding * 2;
+                height += padding * 2;
+            }
+
+            const clonedSvg = svg.cloneNode(true);
+            clonedSvg.setAttribute('viewBox', `${x} ${y} ${width} ${height}`);
+            clonedSvg.setAttribute('width', width);
+            clonedSvg.setAttribute('height', height);
+
+            const gridRects = clonedSvg.querySelectorAll('rect[fill^="url(#"]');
+            gridRects.forEach(r => r.remove());
+
+            const serializer = new XMLSerializer();
+            const svgString = serializer.serializeToString(clonedSvg);
+            const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(svgBlob);
+
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = url;
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+
         const exportPng = getElem('export-png');
         if (exportPng) {
             exportPng.addEventListener('click', (e) => {
                 e.preventDefault();
-                const viewport = getElem('canvas-viewport');
-                if (viewport) {
-                    html2canvas(viewport).then(canvas => {
-                        const link = document.createElement('a');
-                        link.download = `${state.title.replace(/\s+/g, '_')}.png`;
-                        link.href = canvas.toDataURL('image/png');
-                        link.click();
-                    });
+                const svg = getElem('flow-svg');
+                if (svg) {
+                    exportSVGToPNG(svg, `${(state.title || 'flowchart').replace(/\s+/g, '_')}.png`);
                 }
             });
         }
@@ -4333,15 +4450,22 @@
                 e.preventDefault();
                 const svg = getElem('flow-svg');
                 if (svg) {
-                    const svgData = new XMLSerializer().serializeToString(svg);
-                    const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
-                    const svgUrl = URL.createObjectURL(svgBlob);
-                    const downloadLink = document.createElement("a");
-                    downloadLink.href = svgUrl;
-                    downloadLink.download = `${state.title.replace(/\s+/g, '_')}.svg`;
-                    document.body.appendChild(downloadLink);
-                    downloadLink.click();
-                    document.body.removeChild(downloadLink);
+                    downloadSVGDirect(svg, `${(state.title || 'flowchart').replace(/\s+/g, '_')}.svg`);
+                }
+            });
+        }
+
+        const btnExportSubPng = getElem('btn-export-sub-png');
+        if (btnExportSubPng) {
+            btnExportSubPng.addEventListener('click', (e) => {
+                e.preventDefault();
+                const subSvg = getElem('large-subflow-svg');
+                const targetNode = activeSubflowCurrentNode || (subflowModalStack.length > 0 ? subflowModalStack[subflowModalStack.length - 1] : null);
+                const subflowTitle = targetNode ? (targetNode.details?.subflowTitle || targetNode.text || 'subflow').replace(/\s+/g, '_') : 'subflow';
+                if (subSvg) {
+                    exportSVGToPNG(subSvg, `${subflowTitle}.png`);
+                } else {
+                    alert('⚠️ ไม่พบเนื้อหาผังงานย่อยที่จะทำการส่งออกรูปภาพครับ');
                 }
             });
         }
