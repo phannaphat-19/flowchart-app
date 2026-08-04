@@ -266,12 +266,13 @@
         const page = state.pages[0];
         page.name = "ผังกระบวนการสั่งซื้อถึงจัดส่ง (Order-to-Delivery)";
 
+        page.deptFontSize = 13;
         page.departments = [
-            { id: 'dept-sales', name: 'แผนกขาย (Sales)', height: 170 },
-            { id: 'dept-purchasing', name: 'แผนกจัดซื้อ (Purchasing)', height: 160 },
-            { id: 'dept-warehouse', name: 'แผนกคลังสินค้า (Warehouse)', height: 160 },
-            { id: 'dept-transport', name: 'แผนกขนส่ง (Transport)', height: 160 },
-            { id: 'dept-accounting', name: 'แผนกบัญชี (Accounting)', height: 160 }
+            { id: 'dept-sales', name: 'แผนกขาย (Sales)', height: 170, color: '#e0f2fe' },
+            { id: 'dept-purchasing', name: 'แผนกจัดซื้อ (Purchasing)', height: 160, color: '#dcfce7' },
+            { id: 'dept-warehouse', name: 'แผนกคลังสินค้า (Warehouse)', height: 160, color: '#fef3c7' },
+            { id: 'dept-transport', name: 'แผนกขนส่ง (Transport)', height: 160, color: '#f3e8ff' },
+            { id: 'dept-accounting', name: 'แผนกบัญชี (Accounting)', height: 160, color: '#ffe4e6' }
         ];
 
         page.nodes = [
@@ -591,9 +592,10 @@
         const newPage = {
             id: `page-${Date.now()}`,
             name: `กระบวนการย่อย ${pageCount} (Sub-Flow ${pageCount})`,
+            deptFontSize: 13,
             departments: [
-                { id: `d1-${Date.now()}`, name: 'ขั้นตอนการดำเนินงาน (Operation)', height: 200 },
-                { id: `d2-${Date.now()}`, name: 'ขั้นตอนสนับสนุน (Support)', height: 200 }
+                { id: `d1-${Date.now()}`, name: 'ขั้นตอนการดำเนินงาน (Operation)', height: 200, color: '#e0f2fe' },
+                { id: `d2-${Date.now()}`, name: 'ขั้นตอนสนับสนุน (Support)', height: 200, color: '#dcfce7' }
             ],
             nodes: [],
             connections: []
@@ -961,6 +963,12 @@
         const page = getCurrentPage();
         if (!page.departments) page.departments = [];
         tempDepartments = JSON.parse(JSON.stringify(page.departments));
+        
+        const fontSizeInput = getElem('dept-fontsize-input');
+        if (fontSizeInput) {
+            fontSizeInput.value = page.deptFontSize || 13;
+        }
+
         renderDeptModalList();
         const modal = getElem('dept-modal');
         if (modal) modal.style.display = 'flex';
@@ -984,6 +992,10 @@
         tempDepartments.forEach((dept, index) => {
             const row = document.createElement('div');
             row.className = 'dept-item-row';
+            row.style.display = 'flex';
+            row.style.alignItems = 'center';
+            row.style.gap = '8px';
+            row.style.marginBottom = '8px';
 
             const numSpan = document.createElement('span');
             numSpan.style.fontWeight = 'bold';
@@ -991,9 +1003,25 @@
             numSpan.textContent = `${index + 1}.`;
             row.appendChild(numSpan);
 
+            // COLOR PICKER
+            const colorPicker = document.createElement('input');
+            colorPicker.type = 'color';
+            colorPicker.value = dept.color || '#f8fafc';
+            colorPicker.style.width = '28px';
+            colorPicker.style.height = '28px';
+            colorPicker.style.padding = '0';
+            colorPicker.style.border = '1px solid rgba(0,0,0,0.15)';
+            colorPicker.style.borderRadius = '4px';
+            colorPicker.style.cursor = 'pointer';
+            colorPicker.addEventListener('input', (e) => {
+                dept.color = e.target.value;
+            });
+            row.appendChild(colorPicker);
+
             const input = document.createElement('input');
             input.type = 'text';
             input.value = dept.name;
+            input.style.flex = '1';
             input.addEventListener('input', (e) => {
                 dept.name = e.target.value;
             });
@@ -1058,7 +1086,8 @@
                     tempDepartments.push({
                         id: `dept-${Date.now()}`,
                         name: val,
-                        height: 160
+                        height: 160,
+                        color: '#e2e8f0'
                     });
                     if (input) input.value = '';
                     renderDeptModalList();
@@ -1069,6 +1098,12 @@
         if (btnSave) {
             btnSave.addEventListener('click', () => {
                 const page = getCurrentPage();
+                
+                const fontSizeInput = getElem('dept-fontsize-input');
+                if (fontSizeInput) {
+                    page.deptFontSize = parseInt(fontSizeInput.value) || 13;
+                }
+
                 page.departments = JSON.parse(JSON.stringify(tempDepartments));
                 closeDeptModal();
                 renderCanvas();
@@ -2445,7 +2480,15 @@
             rowBg.setAttribute('y', currentY);
             rowBg.setAttribute('width', canvasWidth);
             rowBg.setAttribute('height', laneH);
-            rowBg.setAttribute('fill', index % 2 === 0 ? 'rgba(248, 250, 252, 0.4)' : 'rgba(241, 245, 249, 0.4)');
+            
+            const isDark = document.body.classList.contains('dark-theme');
+            if (dept.color) {
+                rowBg.setAttribute('fill', dept.color);
+                rowBg.setAttribute('fill-opacity', isDark ? '0.12' : '0.35');
+            } else {
+                rowBg.setAttribute('fill', index % 2 === 0 ? (isDark ? '#1e293b' : '#f8fafc') : (isDark ? '#0f172a' : '#f1f5f9'));
+                rowBg.setAttribute('fill-opacity', isDark ? '0.2' : '0.4');
+            }
             g.appendChild(rowBg);
 
             const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
@@ -2503,8 +2546,9 @@
             headerPillGroup.setAttribute('class', 'dept-header-pill');
             headerPillGroup.setAttribute('transform', `translate(20, ${currentY + 12})`);
 
+            const deptFS = page.deptFontSize || 13;
             const textLen = (dept.name || 'แผนก').length;
-            const pillW = Math.max(160, textLen * 9 + 45);
+            const pillW = Math.max(160, textLen * (deptFS * 0.72) + 48);
             const pillH = 34;
 
             const pillRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
@@ -2518,7 +2562,7 @@
             pillText.setAttribute('x', 14);
             pillText.setAttribute('y', 21);
             pillText.setAttribute('fill', '#ffffff');
-            pillText.setAttribute('font-size', '13px');
+            pillText.setAttribute('font-size', `${deptFS}px`);
             pillText.setAttribute('font-weight', '600');
             pillText.setAttribute('font-family', "'Prompt', 'IBM Plex Sans Thai', 'Sarabun', sans-serif");
             pillText.textContent = dept.name;

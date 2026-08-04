@@ -759,6 +759,12 @@
                     <button id="btn-submit-new-dept" class="btn-primary-sm"><i class="fa-solid fa-plus"></i> เพิ่มแผนก</button>
                 </div>
 
+                <div class="dept-global-settings" style="display:flex; align-items:center; gap:10px; margin-bottom:15px; padding:10px; background:rgba(0,0,0,0.03); border-radius:6px; border:1px solid rgba(0,0,0,0.08);">
+                    <label for="dept-fontsize-input" style="font-size:0.82rem; font-weight:600; color:var(--text-dark);">ขนาดตัวอักษรหัวข้อแผนก (Font Size):</label>
+                    <input type="number" id="dept-fontsize-input" value="13" min="10" max="24" style="width:70px; padding:4px 8px; font-size:0.82rem; border-radius:4px; border:1px solid #cbd5e1;" />
+                    <span style="font-size:0.75rem; color:#64748b;">px (ค่าเริ่มต้นคือ 13px)</span>
+                </div>
+
                 <div id="dept-list-container" class="dept-list-container"></div>
             </div>
             <div class="modal-footer">
