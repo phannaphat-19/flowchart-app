@@ -4358,8 +4358,10 @@
 
                 const serializer = new XMLSerializer();
                 const svgString = serializer.serializeToString(clonedSvg);
-                const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
-                const url = URL.createObjectURL(svgBlob);
+                
+                // Safe Unicode Base64 encoding for cross-browser safety and offline rendering
+                const base64Svg = btoa(unescape(encodeURIComponent(svgString)));
+                const url = 'data:image/svg+xml;base64,' + base64Svg;
 
                 const image = new Image();
                 image.onload = () => {
@@ -4382,8 +4384,6 @@
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
-
-                    URL.revokeObjectURL(url);
                 };
 
                 image.onerror = (err) => {
