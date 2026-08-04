@@ -4313,26 +4313,55 @@
 
         function exportSVGToPNG(svg, filename) {
             try {
-                const bbox = svg.getBBox();
-                const padding = 40;
-                let x = bbox.x, y = bbox.y, width = bbox.width, height = bbox.height;
-                if (width <= 0 || height <= 0) {
-                    x = 0; y = 0; width = 800; height = 600;
-                } else {
-                    x = Math.max(0, x - padding);
-                    y = Math.max(0, y - padding);
-                    width += padding * 2;
-                    height += padding * 2;
-                }
-
                 const clonedSvg = svg.cloneNode(true);
-                clonedSvg.setAttribute('viewBox', `${x} ${y} ${width} ${height}`);
-                clonedSvg.setAttribute('width', width);
-                clonedSvg.setAttribute('height', height);
+                
+                // Remove pan/zoom transform from subflow group in cloned SVG
+                const clonedGroup = clonedSvg.getElementById('subflow-content-group');
+                if (clonedGroup) {
+                    clonedGroup.removeAttribute('transform');
+                }
 
                 // Remove background grid rects
                 const gridRects = clonedSvg.querySelectorAll('rect[fill^="url(#"]');
                 gridRects.forEach(r => r.remove());
+
+                // Find active nodes in cloned SVG to compute bounding box
+                const nodes = clonedSvg.querySelectorAll('.canvas-node, .subnode-group');
+                let x = 0, y = 0, width = 800, height = 600;
+                
+                if (nodes.length > 0) {
+                    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                    nodes.forEach(node => {
+                        // Fallback dimensions for subnodes or main canvas nodes
+                        const w = node.classList.contains('subnode-group') ? (parseFloat(node.querySelector('rect')?.getAttribute('width')) || 130) : (parseFloat(node.querySelector('rect')?.getAttribute('width')) || 140);
+                        const h = node.classList.contains('subnode-group') ? (parseFloat(node.querySelector('rect')?.getAttribute('height')) || 50) : (parseFloat(node.querySelector('rect')?.getAttribute('height')) || 60);
+                        
+                        const transform = node.getAttribute('transform');
+                        let tx = 0, ty = 0;
+                        if (transform) {
+                            const match = transform.match(/translate\(([^,)]+)[, ]+([^)]+)\)/);
+                            if (match) {
+                                tx = parseFloat(match[1]);
+                                ty = parseFloat(match[2]);
+                            }
+                        }
+                        
+                        if (tx < minX) minX = tx;
+                        if (ty < minY) minY = ty;
+                        if (tx + w > maxX) maxX = tx + w;
+                        if (ty + h > maxY) maxY = ty + h;
+                    });
+                    
+                    const padding = 50;
+                    x = Math.max(0, minX - padding);
+                    y = Math.max(0, minY - padding);
+                    width = (maxX - minX) + padding * 2;
+                    height = (maxY - minY) + padding * 2;
+                }
+
+                clonedSvg.setAttribute('viewBox', `${x} ${y} ${width} ${height}`);
+                clonedSvg.setAttribute('width', width);
+                clonedSvg.setAttribute('height', height);
 
                 // Set nice background color
                 const isDark = document.body.classList.contains('dark-theme');
@@ -4342,7 +4371,13 @@
                 bgRect.setAttribute('width', width);
                 bgRect.setAttribute('height', height);
                 bgRect.setAttribute('fill', isDark ? '#0b0f19' : '#f8fafc');
-                clonedSvg.insertBefore(bgRect, clonedSvg.firstChild);
+                
+                const defs = clonedSvg.querySelector('defs');
+                if (defs) {
+                    defs.after(bgRect);
+                } else {
+                    clonedSvg.insertBefore(bgRect, clonedSvg.firstChild);
+                }
 
                 // Inject font family rules for standalone image rendering
                 const styleElement = document.createElementNS('http://www.w3.org/2000/svg', 'style');
@@ -4359,7 +4394,7 @@
                 const serializer = new XMLSerializer();
                 const svgString = serializer.serializeToString(clonedSvg);
                 
-                // Safe Unicode Base64 encoding for cross-browser safety and offline rendering
+                // Safe Unicode Base64 encoding
                 const base64Svg = btoa(unescape(encodeURIComponent(svgString)));
                 const url = 'data:image/svg+xml;base64,' + base64Svg;
 
@@ -4377,13 +4412,18 @@
 
                     ctx.drawImage(image, 0, 0, width, height);
 
-                    const pngUrl = canvas.toDataURL('image/png');
-                    const link = document.createElement('a');
-                    link.download = filename;
-                    link.href = pngUrl;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
+                    // Use toBlob instead of toDataURL to prevent browser truncation/corruption of large images
+                    canvas.toBlob((blob) => {
+                        const pngUrl = URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.download = filename;
+                        link.href = pngUrl;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        
+                        setTimeout(() => URL.revokeObjectURL(pngUrl), 100);
+                    }, 'image/png');
                 };
 
                 image.onerror = (err) => {
@@ -4395,31 +4435,56 @@
                 image.src = url;
             } catch (e) {
                 console.error(e);
-                alert('⚠️ ระบบส่งออกขัดข้องเนื่องจากเบราว์เซอร์บล็อกการทํางานบางส่วน จะทำการดาวน์โหลดเป็นไฟล์เวกเตอร์แทนครับ');
+                alert('⚠️ ระบบส่งออกขัดข้อง จะทำการดาวน์โหลดเป็นไฟล์เวกเตอร์แทนครับ');
                 downloadSVGDirect(svg, filename.replace('.png', '.svg'));
             }
         }
 
         function downloadSVGDirect(svg, filename) {
-            const bbox = svg.getBBox();
-            const padding = 40;
-            let x = bbox.x, y = bbox.y, width = bbox.width, height = bbox.height;
-            if (width <= 0 || height <= 0) {
-                x = 0; y = 0; width = 800; height = 600;
-            } else {
-                x = Math.max(0, x - padding);
-                y = Math.max(0, y - padding);
-                width += padding * 2;
-                height += padding * 2;
-            }
-
             const clonedSvg = svg.cloneNode(true);
-            clonedSvg.setAttribute('viewBox', `${x} ${y} ${width} ${height}`);
-            clonedSvg.setAttribute('width', width);
-            clonedSvg.setAttribute('height', height);
+            const clonedGroup = clonedSvg.getElementById('subflow-content-group');
+            if (clonedGroup) {
+                clonedGroup.removeAttribute('transform');
+            }
 
             const gridRects = clonedSvg.querySelectorAll('rect[fill^="url(#"]');
             gridRects.forEach(r => r.remove());
+
+            const nodes = clonedSvg.querySelectorAll('.canvas-node, .subnode-group');
+            let x = 0, y = 0, width = 800, height = 600;
+            
+            if (nodes.length > 0) {
+                let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                nodes.forEach(node => {
+                    const w = node.classList.contains('subnode-group') ? (parseFloat(node.querySelector('rect')?.getAttribute('width')) || 130) : (parseFloat(node.querySelector('rect')?.getAttribute('width')) || 140);
+                    const h = node.classList.contains('subnode-group') ? (parseFloat(node.querySelector('rect')?.getAttribute('height')) || 50) : (parseFloat(node.querySelector('rect')?.getAttribute('height')) || 60);
+                    
+                    const transform = node.getAttribute('transform');
+                    let tx = 0, ty = 0;
+                    if (transform) {
+                        const match = transform.match(/translate\(([^,)]+)[, ]+([^)]+)\)/);
+                        if (match) {
+                            tx = parseFloat(match[1]);
+                            ty = parseFloat(match[2]);
+                        }
+                    }
+                    
+                    if (tx < minX) minX = tx;
+                    if (ty < minY) minY = ty;
+                    if (tx + w > maxX) maxX = tx + w;
+                    if (ty + h > maxY) maxY = ty + h;
+                });
+                
+                const padding = 50;
+                x = Math.max(0, minX - padding);
+                y = Math.max(0, minY - padding);
+                width = (maxX - minX) + padding * 2;
+                height = (maxY - minY) + padding * 2;
+            }
+
+            clonedSvg.setAttribute('viewBox', `${x} ${y} ${width} ${height}`);
+            clonedSvg.setAttribute('width', width);
+            clonedSvg.setAttribute('height', height);
 
             const serializer = new XMLSerializer();
             const svgString = serializer.serializeToString(clonedSvg);
