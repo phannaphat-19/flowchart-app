@@ -154,6 +154,52 @@ body.dark-theme .icon-btn-sm:hover:not(:disabled) {
     color: #38bdf8 !important;
 }
 
+/* Presentation Mode Fullscreen Overrides */
+body.presentation-mode .app-header,
+body.presentation-mode .sidebar,
+body.presentation-mode .inspector-panel,
+body.presentation-mode .floating-toolbar,
+body.presentation-mode .pages-bar,
+body.presentation-mode #subnode-customizer-bar,
+body.presentation-mode .subflow-modal-header,
+body.presentation-mode .modal-left-sidebar,
+body.presentation-mode .modal-desc-section,
+body.presentation-mode .modal-issues-section,
+body.presentation-mode .modal-footer {
+    display: none !important;
+}
+
+body.presentation-mode .workspace {
+    height: 100vh !important;
+}
+
+body.presentation-mode .canvas-container {
+    height: 100vh !important;
+}
+
+body.presentation-mode .canvas-viewport {
+    height: 100vh !important;
+    width: 100vw !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    z-index: 9999 !important;
+}
+
+body.presentation-mode .large-svg-container.ultra-svg-container {
+    height: 100vh !important;
+    width: 100vw !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    z-index: 9999 !important;
+    background: #f8fafc !important;
+}
+
+body.dark-theme.presentation-mode .large-svg-container.ultra-svg-container {
+    background: #090d16 !important;
+}
+
 * {
     box-sizing: border-box;
     margin: 0;

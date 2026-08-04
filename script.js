@@ -1091,6 +1091,9 @@
         const modal = getElem('subflow-modal');
         if (!modal) return;
 
+        const mainOverlay = getElem('main-presentation-overlay');
+        if (mainOverlay) mainOverlay.style.display = 'none';
+
         if (isPushStack) {
             if (subflowModalStack.length === 0 || subflowModalStack[subflowModalStack.length - 1] !== node) {
                 subflowModalStack.push(node);
@@ -1165,6 +1168,11 @@
         activeSubflowCurrentNode = null;
         const modal = getElem('subflow-modal');
         if (modal) modal.style.display = 'none';
+
+        const mainOverlay = getElem('main-presentation-overlay');
+        if (mainOverlay && document.fullscreenElement) {
+            mainOverlay.style.display = 'flex';
+        }
     }
 
     function renderOriginalBoxPreview(node) {
@@ -2221,37 +2229,75 @@
 
         if (btnFullscreen) {
             btnFullscreen.addEventListener('click', () => {
-                const svgContainer = document.querySelector('.ultra-svg-container');
-                if (svgContainer) {
-                    if (!document.fullscreenElement) {
-                        svgContainer.style.backgroundColor = '#f8fafc'; // Add nice background for presentation
-                        if (svgContainer.requestFullscreen) {
-                            svgContainer.requestFullscreen();
-                        } else if (svgContainer.webkitRequestFullscreen) { /* Safari */
-                            svgContainer.webkitRequestFullscreen();
-                        } else if (svgContainer.msRequestFullscreen) { /* IE11 */
-                            svgContainer.msRequestFullscreen();
-                        }
-                    } else {
-                        if (document.exitFullscreen) {
-                            document.exitFullscreen();
-                        } else if (document.webkitExitFullscreen) { /* Safari */
-                            document.webkitExitFullscreen();
-                        } else if (document.msExitFullscreen) { /* IE11 */
-                            document.msExitFullscreen();
-                        }
+                if (!document.fullscreenElement) {
+                    if (document.documentElement.requestFullscreen) {
+                        document.documentElement.requestFullscreen();
+                    } else if (document.documentElement.webkitRequestFullscreen) { /* Safari */
+                        document.documentElement.webkitRequestFullscreen();
+                    } else if (document.documentElement.msRequestFullscreen) { /* IE11 */
+                        document.documentElement.msRequestFullscreen();
+                    }
+                } else {
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    } else if (document.webkitExitFullscreen) { /* Safari */
+                        document.webkitExitFullscreen();
+                    } else if (document.msExitFullscreen) { /* IE11 */
+                        document.msExitFullscreen();
                     }
                 }
             });
-            
-            // Revert background color when exiting fullscreen via Esc key
-            document.addEventListener('fullscreenchange', () => {
-                const svgContainer = document.querySelector('.ultra-svg-container');
-                if (svgContainer && !document.fullscreenElement) {
-                    svgContainer.style.backgroundColor = '';
+        }
+
+        const btnMainPres = getElem('btn-main-presentation');
+        if (btnMainPres) {
+            btnMainPres.addEventListener('click', () => {
+                if (!document.fullscreenElement) {
+                    if (document.documentElement.requestFullscreen) {
+                        document.documentElement.requestFullscreen();
+                    } else if (document.documentElement.webkitRequestFullscreen) { /* Safari */
+                        document.documentElement.webkitRequestFullscreen();
+                    } else if (document.documentElement.msRequestFullscreen) { /* IE11 */
+                        document.documentElement.msRequestFullscreen();
+                    }
                 }
             });
         }
+
+        const btnMainExit = getElem('btn-main-fullscreen-exit');
+        if (btnMainExit) {
+            btnMainExit.addEventListener('click', () => {
+                if (document.fullscreenElement) {
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    } else if (document.webkitExitFullscreen) { /* Safari */
+                        document.webkitExitFullscreen();
+                    } else if (document.msExitFullscreen) { /* IE11 */
+                        document.msExitFullscreen();
+                    }
+                }
+            });
+        }
+
+        // Global Fullscreen Change Event
+        document.addEventListener('fullscreenchange', () => {
+            const isFs = !!document.fullscreenElement;
+            document.body.classList.toggle('presentation-mode', isFs);
+
+            // Toggle background colors for presentation mode in subflow
+            const svgContainer = document.querySelector('.ultra-svg-container');
+            if (svgContainer) {
+                svgContainer.style.backgroundColor = isFs ? (document.body.classList.contains('dark-theme') ? '#090d16' : '#f8fafc') : '';
+            }
+
+            // Toggle display of overlays
+            const mainOverlay = getElem('main-presentation-overlay');
+            if (mainOverlay) {
+                const modal = getElem('subflow-modal');
+                const isModalOpen = modal && modal.style.display === 'block';
+                mainOverlay.style.display = (isFs && !isModalOpen) ? 'flex' : 'none';
+            }
+        });
 
         if (modalLeftText) {
             modalLeftText.addEventListener('input', () => {

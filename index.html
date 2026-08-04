@@ -127,6 +127,10 @@
             <button id="btn-toggle-flow-header" class="btn-flow-toggle-prominent" style="display:inline-flex; align-items:center; gap:4px; background:linear-gradient(135deg, #06b6d4, #0891b2); color:#ffffff; padding:5px 10px; border-radius:6px; font-size:0.78rem; font-weight:700; border:none; cursor:pointer; box-shadow:0 2px 8px rgba(6,182,212,0.3); white-space:nowrap;" title="เปิดหรือปิดการเคลื่อนไหวเส้นไหล (Toggle Line Flow Animation)">
                 🌊 <span id="flow-header-text">เส้นไหล: เปิด</span>
             </button>
+            <!-- PROMINENT MAIN PRESENTATION BUTTON -->
+            <button id="btn-main-presentation" class="btn-presentation-prominent" style="display:inline-flex; align-items:center; gap:4px; background:linear-gradient(135deg, #10b981, #059669); color:#ffffff; padding:5px 10px; border-radius:6px; font-size:0.78rem; font-weight:700; border:none; cursor:pointer; box-shadow:0 2px 8px rgba(16,185,129,0.3); white-space:nowrap;" title="ขยายผังหลักเต็มจอเพื่อพรีเซนต์ (Main Canvas Fullscreen Presentation)">
+                🖥️ <span id="presentation-header-text">พรีเซนต์เต็มจอ</span>
+            </button>
         </div>
 
         <div class="header-right">
@@ -241,6 +245,12 @@
 
             <!-- SVG Render Area -->
             <div class="canvas-viewport" id="canvas-viewport">
+                <div id="main-presentation-overlay" class="main-presentation-overlay" style="position: absolute; top: 14px; left: 14px; z-index: 100; display: none; align-items: center; gap: 12px; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px); padding: 6px 16px; border-radius: 30px; border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);">
+                    <button id="btn-main-fullscreen-exit" class="btn-fullscreen-back" style="background: #ef4444; color: #ffffff; border: none; border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                        <i class="fa-solid fa-xmark"></i> ออกจากพรีเซนต์
+                    </button>
+                    <span style="color: #f8fafc; font-size: 12px; font-weight: 500;">🖥️ ผังงานหลัก (Main Canvas)</span>
+                </div>
                 <svg id="flow-svg" width="5000" height="5000">
                     <defs>
                         <!-- Grid Pattern -->
