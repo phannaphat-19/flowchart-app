@@ -4315,50 +4315,84 @@
             try {
                 const clonedSvg = svg.cloneNode(true);
                 
-                // Remove pan/zoom transform from subflow group in cloned SVG
-                const clonedGroup = clonedSvg.getElementById('subflow-content-group');
-                if (clonedGroup) {
-                    clonedGroup.removeAttribute('transform');
+                // Remove pan/zoom transform from both main content group and subflow content group in cloned SVG
+                const clonedCanvasContent = clonedSvg.getElementById('canvas-content');
+                if (clonedCanvasContent) {
+                    clonedCanvasContent.removeAttribute('transform');
+                }
+                const clonedSubflowGroup = clonedSvg.getElementById('subflow-content-group');
+                if (clonedSubflowGroup) {
+                    clonedSubflowGroup.removeAttribute('transform');
                 }
 
                 // Remove background grid rects
                 const gridRects = clonedSvg.querySelectorAll('rect[fill^="url(#"]');
                 gridRects.forEach(r => r.remove());
 
-                // Find active nodes in the LIVE SVG to accurately compute bounding box
-                const nodes = svg.querySelectorAll('.flow-node, .sub-node-elem');
+                const isSubflow = (svg.id === 'large-subflow-svg');
                 let x = 0, y = 0, width = 800, height = 600;
                 
-                if (nodes.length > 0) {
-                    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                if (isSubflow) {
+                    // For subflow modal: crop tightly around active subnodes
+                    const nodes = svg.querySelectorAll('.sub-node-elem');
+                    if (nodes.length > 0) {
+                        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                        nodes.forEach(node => {
+                            const bbox = node.getBBox();
+                            const transform = node.getAttribute('transform');
+                            let tx = 0, ty = 0;
+                            if (transform) {
+                                const match = transform.match(/translate\(([^,)]+)[, ]+([^)]+)\)/);
+                                if (match) {
+                                    tx = parseFloat(match[1]);
+                                    ty = parseFloat(match[2]);
+                                }
+                            }
+                            const nx = tx + bbox.x;
+                            const ny = ty + bbox.y;
+                            const nw = bbox.width;
+                            const nh = bbox.height;
+                            if (nx < minX) minX = nx;
+                            if (ny < minY) minY = ny;
+                            if (nx + nw > maxX) maxX = nx + nw;
+                            if (ny + nh > maxY) maxY = ny + nh;
+                        });
+                        const padding = 50;
+                        x = minX - padding;
+                        y = minY - padding;
+                        width = (maxX - minX) + padding * 2;
+                        height = (maxY - minY) + padding * 2;
+                    }
+                } else {
+                    // For main page flowchart: 
+                    // 1. Keep X=0 to preserve department swimlane titles on the left
+                    // 2. Keep Y=0 to show the flowchart height properly
+                    // 3. Scan nodes to determine how far right the flowchart extends
+                    const nodes = svg.querySelectorAll('.flow-node');
+                    let maxX = 1200; // Default min width
                     nodes.forEach(node => {
                         const bbox = node.getBBox();
                         const transform = node.getAttribute('transform');
-                        let tx = 0, ty = 0;
+                        let tx = 0;
                         if (transform) {
                             const match = transform.match(/translate\(([^,)]+)[, ]+([^)]+)\)/);
-                            if (match) {
-                                tx = parseFloat(match[1]);
-                                ty = parseFloat(match[2]);
-                            }
+                            if (match) tx = parseFloat(match[1]);
                         }
-                        
-                        const nx = tx + bbox.x;
-                        const ny = ty + bbox.y;
-                        const nw = bbox.width;
-                        const nh = bbox.height;
-                        
-                        if (nx < minX) minX = nx;
-                        if (ny < minY) minY = ny;
-                        if (nx + nw > maxX) maxX = nx + nw;
-                        if (ny + nh > maxY) maxY = ny + nh;
+                        const nx = tx + bbox.x + bbox.width;
+                        if (nx > maxX) maxX = nx;
                     });
                     
-                    const padding = 50;
-                    x = minX - padding;
-                    y = minY - padding;
-                    width = (maxX - minX) + padding * 2;
-                    height = (maxY - minY) + padding * 2;
+                    // Determine total height of all lanes on the active page
+                    const page = getCurrentPage();
+                    let totalHeight = 600;
+                    if (page && page.departments) {
+                        totalHeight = page.departments.reduce((acc, dept) => acc + (dept.height || 160), 0);
+                    }
+                    
+                    x = 0;
+                    y = 0;
+                    width = maxX + 100; // Extra right-padding
+                    height = totalHeight;
                 }
 
                 clonedSvg.setAttribute('viewBox', `${x} ${y} ${width} ${height}`);
@@ -4444,6 +4478,12 @@
 
         function downloadSVGDirect(svg, filename) {
             const clonedSvg = svg.cloneNode(true);
+            
+            // Remove pan/zoom transform from both main content group and subflow content group in cloned SVG
+            const clonedCanvasContent = clonedSvg.getElementById('canvas-content');
+            if (clonedCanvasContent) {
+                clonedCanvasContent.removeAttribute('transform');
+            }
             const clonedGroup = clonedSvg.getElementById('subflow-content-group');
             if (clonedGroup) {
                 clonedGroup.removeAttribute('transform');
@@ -4452,40 +4492,70 @@
             const gridRects = clonedSvg.querySelectorAll('rect[fill^="url(#"]');
             gridRects.forEach(r => r.remove());
 
-            // Find active nodes in the LIVE SVG to accurately compute bounding box
-            const nodes = svg.querySelectorAll('.flow-node, .sub-node-elem');
+            const isSubflow = (svg.id === 'large-subflow-svg');
             let x = 0, y = 0, width = 800, height = 600;
             
-            if (nodes.length > 0) {
-                let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            if (isSubflow) {
+                // For subflow modal: crop tightly around active subnodes
+                const nodes = svg.querySelectorAll('.sub-node-elem');
+                if (nodes.length > 0) {
+                    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                    nodes.forEach(node => {
+                        const bbox = node.getBBox();
+                        const transform = node.getAttribute('transform');
+                        let tx = 0, ty = 0;
+                        if (transform) {
+                            const match = transform.match(/translate\(([^,)]+)[, ]+([^)]+)\)/);
+                            if (match) {
+                                tx = parseFloat(match[1]);
+                                ty = parseFloat(match[2]);
+                            }
+                        }
+                        const nx = tx + bbox.x;
+                        const ny = ty + bbox.y;
+                        const nw = bbox.width;
+                        const nh = bbox.height;
+                        if (nx < minX) minX = nx;
+                        if (ny < minY) minY = ny;
+                        if (nx + nw > maxX) maxX = nx + nw;
+                        if (ny + nh > maxY) maxY = ny + nh;
+                    });
+                    const padding = 50;
+                    x = minX - padding;
+                    y = minY - padding;
+                    width = (maxX - minX) + padding * 2;
+                    height = (maxY - minY) + padding * 2;
+                }
+            } else {
+                // For main page flowchart: 
+                // 1. Keep X=0 to preserve department swimlane titles on the left
+                // 2. Keep Y=0 to show the flowchart height properly
+                // 3. Scan nodes to determine how far right the flowchart extends
+                const nodes = svg.querySelectorAll('.flow-node');
+                let maxX = 1200; // Default min width
                 nodes.forEach(node => {
                     const bbox = node.getBBox();
                     const transform = node.getAttribute('transform');
-                    let tx = 0, ty = 0;
+                    let tx = 0;
                     if (transform) {
                         const match = transform.match(/translate\(([^,)]+)[, ]+([^)]+)\)/);
-                        if (match) {
-                            tx = parseFloat(match[1]);
-                            ty = parseFloat(match[2]);
-                        }
+                        if (match) tx = parseFloat(match[1]);
                     }
-                    
-                    const nx = tx + bbox.x;
-                    const ny = ty + bbox.y;
-                    const nw = bbox.width;
-                    const nh = bbox.height;
-                    
-                    if (nx < minX) minX = nx;
-                    if (ny < minY) minY = ny;
-                    if (nx + nw > maxX) maxX = nx + nw;
-                    if (ny + nh > maxY) maxY = ny + nh;
+                    const nx = tx + bbox.x + bbox.width;
+                    if (nx > maxX) maxX = nx;
                 });
                 
-                const padding = 50;
-                x = minX - padding;
-                y = minY - padding;
-                width = (maxX - minX) + padding * 2;
-                height = (maxY - minY) + padding * 2;
+                // Determine total height of all lanes on the active page
+                const page = getCurrentPage();
+                let totalHeight = 600;
+                if (page && page.departments) {
+                    totalHeight = page.departments.reduce((acc, dept) => acc + (dept.height || 160), 0);
+                }
+                
+                x = 0;
+                y = 0;
+                width = maxX + 100; // Extra right-padding
+                height = totalHeight;
             }
 
             clonedSvg.setAttribute('viewBox', `${x} ${y} ${width} ${height}`);
