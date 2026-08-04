@@ -4355,8 +4355,8 @@
                     });
                     
                     const padding = 50;
-                    x = Math.max(0, minX - padding);
-                    y = Math.max(0, minY - padding);
+                    x = minX - padding;
+                    y = minY - padding;
                     width = (maxX - minX) + padding * 2;
                     height = (maxY - minY) + padding * 2;
                 }
@@ -4482,8 +4482,8 @@
                 });
                 
                 const padding = 50;
-                x = Math.max(0, minX - padding);
-                y = Math.max(0, minY - padding);
+                x = minX - padding;
+                y = minY - padding;
                 width = (maxX - minX) + padding * 2;
                 height = (maxY - minY) + padding * 2;
             }
