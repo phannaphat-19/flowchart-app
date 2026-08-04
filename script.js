@@ -1003,20 +1003,46 @@
             numSpan.textContent = `${index + 1}.`;
             row.appendChild(numSpan);
 
-            // COLOR PICKER
-            const colorPicker = document.createElement('input');
-            colorPicker.type = 'color';
-            colorPicker.value = dept.color || '#f8fafc';
-            colorPicker.style.width = '28px';
-            colorPicker.style.height = '28px';
-            colorPicker.style.padding = '0';
-            colorPicker.style.border = '1px solid rgba(0,0,0,0.15)';
-            colorPicker.style.borderRadius = '4px';
-            colorPicker.style.cursor = 'pointer';
-            colorPicker.addEventListener('input', (e) => {
-                dept.color = e.target.value;
+            // PREDEFINED COLOR PALETTE
+            const paletteContainer = document.createElement('div');
+            paletteContainer.style.display = 'flex';
+            paletteContainer.style.alignItems = 'center';
+            paletteContainer.style.gap = '4px';
+            paletteContainer.style.marginRight = '8px';
+
+            const paletteColors = [
+                '#e0f2fe', // blue
+                '#dcfce7', // green
+                '#fef3c7', // amber
+                '#f3e8ff', // purple
+                '#ffe4e6', // pink
+                '#ffedd5', // orange
+                '#ccfbf1', // teal
+                '#e2e8f0'  // gray
+            ];
+
+            const currentVal = (dept.color || '#e2e8f0').toLowerCase();
+
+            paletteColors.forEach(col => {
+                const circle = document.createElement('button');
+                circle.type = 'button';
+                circle.style.width = '18px';
+                circle.style.height = '18px';
+                circle.style.borderRadius = '50%';
+                circle.style.background = col;
+                circle.style.border = col.toLowerCase() === currentVal ? '2px solid #4f46e5' : '1px solid rgba(0,0,0,0.18)';
+                circle.style.boxShadow = col.toLowerCase() === currentVal ? '0 0 5px rgba(79,70,229,0.5)' : 'none';
+                circle.style.cursor = 'pointer';
+                circle.style.padding = '0';
+                circle.title = `เลือกสีนี้`;
+                circle.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    dept.color = col;
+                    renderDeptModalList();
+                });
+                paletteContainer.appendChild(circle);
             });
-            row.appendChild(colorPicker);
+            row.appendChild(paletteContainer);
 
             const input = document.createElement('input');
             input.type = 'text';
