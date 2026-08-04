@@ -4325,17 +4325,14 @@
                 const gridRects = clonedSvg.querySelectorAll('rect[fill^="url(#"]');
                 gridRects.forEach(r => r.remove());
 
-                // Find active nodes in cloned SVG to compute bounding box
-                const nodes = clonedSvg.querySelectorAll('.canvas-node, .subnode-group');
+                // Find active nodes in the LIVE SVG to accurately compute bounding box
+                const nodes = svg.querySelectorAll('.flow-node, .sub-node-elem');
                 let x = 0, y = 0, width = 800, height = 600;
                 
                 if (nodes.length > 0) {
                     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
                     nodes.forEach(node => {
-                        // Fallback dimensions for subnodes or main canvas nodes
-                        const w = node.classList.contains('subnode-group') ? (parseFloat(node.querySelector('rect')?.getAttribute('width')) || 130) : (parseFloat(node.querySelector('rect')?.getAttribute('width')) || 140);
-                        const h = node.classList.contains('subnode-group') ? (parseFloat(node.querySelector('rect')?.getAttribute('height')) || 50) : (parseFloat(node.querySelector('rect')?.getAttribute('height')) || 60);
-                        
+                        const bbox = node.getBBox();
                         const transform = node.getAttribute('transform');
                         let tx = 0, ty = 0;
                         if (transform) {
@@ -4346,10 +4343,15 @@
                             }
                         }
                         
-                        if (tx < minX) minX = tx;
-                        if (ty < minY) minY = ty;
-                        if (tx + w > maxX) maxX = tx + w;
-                        if (ty + h > maxY) maxY = ty + h;
+                        const nx = tx + bbox.x;
+                        const ny = ty + bbox.y;
+                        const nw = bbox.width;
+                        const nh = bbox.height;
+                        
+                        if (nx < minX) minX = nx;
+                        if (ny < minY) minY = ny;
+                        if (nx + nw > maxX) maxX = nx + nw;
+                        if (ny + nh > maxY) maxY = ny + nh;
                     });
                     
                     const padding = 50;
@@ -4450,15 +4452,14 @@
             const gridRects = clonedSvg.querySelectorAll('rect[fill^="url(#"]');
             gridRects.forEach(r => r.remove());
 
-            const nodes = clonedSvg.querySelectorAll('.canvas-node, .subnode-group');
+            // Find active nodes in the LIVE SVG to accurately compute bounding box
+            const nodes = svg.querySelectorAll('.flow-node, .sub-node-elem');
             let x = 0, y = 0, width = 800, height = 600;
             
             if (nodes.length > 0) {
                 let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
                 nodes.forEach(node => {
-                    const w = node.classList.contains('subnode-group') ? (parseFloat(node.querySelector('rect')?.getAttribute('width')) || 130) : (parseFloat(node.querySelector('rect')?.getAttribute('width')) || 140);
-                    const h = node.classList.contains('subnode-group') ? (parseFloat(node.querySelector('rect')?.getAttribute('height')) || 50) : (parseFloat(node.querySelector('rect')?.getAttribute('height')) || 60);
-                    
+                    const bbox = node.getBBox();
                     const transform = node.getAttribute('transform');
                     let tx = 0, ty = 0;
                     if (transform) {
@@ -4469,10 +4470,15 @@
                         }
                     }
                     
-                    if (tx < minX) minX = tx;
-                    if (ty < minY) minY = ty;
-                    if (tx + w > maxX) maxX = tx + w;
-                    if (ty + h > maxY) maxY = ty + h;
+                    const nx = tx + bbox.x;
+                    const ny = ty + bbox.y;
+                    const nw = bbox.width;
+                    const nh = bbox.height;
+                    
+                    if (nx < minX) minX = nx;
+                    if (ny < minY) minY = ny;
+                    if (nx + nw > maxX) maxX = nx + nw;
+                    if (ny + nh > maxY) maxY = ny + nh;
                 });
                 
                 const padding = 50;
