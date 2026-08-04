@@ -1851,8 +1851,20 @@
                         if (!isResizing) return;
                         const dw = moveEvt.clientX - startX;
                         const dh = moveEvt.clientY - startY;
-                        sn.w = Math.max(60, origW + dw / subflowModalZoom);
-                        sn.h = Math.max(35, origH + dh / subflowModalZoom);
+
+                        let newW = origW + dw / subflowModalZoom;
+                        let newH = origH + dh / subflowModalZoom;
+
+                        if (state.gridSnap) {
+                            newW = Math.round(newW / 20) * 20;
+                            newH = Math.round(newH / 20) * 20;
+                        } else {
+                            newW = Math.round(newW);
+                            newH = Math.round(newH);
+                        }
+
+                        sn.w = Math.max(80, newW);
+                        sn.h = Math.max(40, newH);
                         renderLargeSubFlowchartSVG(node);
                     };
 
@@ -1913,8 +1925,21 @@
                     const dx = (moveEvent.clientX - startClientX) / subflowModalZoom;
                     const dy = (moveEvent.clientY - startClientY) / subflowModalZoom;
 
-                    sn.x = origX + dx;
-                    sn.y = origY + dy;
+                    let newX = origX + dx;
+                    let newY = origY + dy;
+
+                    if (state.gridSnap) {
+                        const gridSize = 20;
+                        const w = sn.w || 130;
+                        const h = sn.h || 50;
+                        const centerX = newX + w / 2;
+                        const centerY = newY + h / 2;
+                        newX = Math.round(centerX / gridSize) * gridSize - w / 2;
+                        newY = Math.round(centerY / gridSize) * gridSize - h / 2;
+                    }
+
+                    sn.x = newX;
+                    sn.y = newY;
                     
                     g.setAttribute('transform', `translate(${sn.x}, ${sn.y})`);
                 };
@@ -3171,8 +3196,12 @@
 
                     if (state.gridSnap) {
                         const gridSize = 20;
-                        newX = Math.round(newX / gridSize) * gridSize;
-                        newY = Math.round(newY / gridSize) * gridSize;
+                        const w = node.width || 140;
+                        const h = node.height || 60;
+                        const centerX = newX + w / 2;
+                        const centerY = newY + h / 2;
+                        newX = Math.round(centerX / gridSize) * gridSize - w / 2;
+                        newY = Math.round(centerY / gridSize) * gridSize - h / 2;
                     }
 
                     node.x = newX;
@@ -3228,8 +3257,19 @@
                     const dw = (moveEvent.clientX - startClientX) / state.zoom;
                     const dh = (moveEvent.clientY - startClientY) / state.zoom;
 
-                    node.width = Math.max(70, Math.round(origW + dw));
-                    node.height = Math.max(40, Math.round(origH + dh));
+                    let newW = origW + dw;
+                    let newH = origH + dh;
+
+                    if (state.gridSnap) {
+                        newW = Math.round(newW / 20) * 20;
+                        newH = Math.round(newH / 20) * 20;
+                    } else {
+                        newW = Math.round(newW);
+                        newH = Math.round(newH);
+                    }
+
+                    node.width = Math.max(80, newW);
+                    node.height = Math.max(40, newH);
 
                     renderCanvas();
                     renderInspector();
