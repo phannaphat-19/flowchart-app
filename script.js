@@ -4317,11 +4317,11 @@
                 const isDark = document.body.classList.contains('dark-theme');
                 
                 // Remove pan/zoom transform from both main content group and subflow content group in cloned SVG
-                const clonedCanvasContent = clonedSvg.getElementById('canvas-content');
+                const clonedCanvasContent = clonedSvg.querySelector('#canvas-content');
                 if (clonedCanvasContent) {
                     clonedCanvasContent.removeAttribute('transform');
                 }
-                const clonedSubflowGroup = clonedSvg.getElementById('subflow-content-group');
+                const clonedSubflowGroup = clonedSvg.querySelector('#subflow-content-group');
                 if (clonedSubflowGroup) {
                     clonedSubflowGroup.removeAttribute('transform');
                 }
@@ -4398,7 +4398,7 @@
                             headerGroup.appendChild(badgeText);
                             
                             // Append header inside cloned content group to ensure proper alignment
-                            const targetGroup = clonedSvg.getElementById('subflow-content-group') || clonedSvg;
+                            const targetGroup = clonedSvg.querySelector('#subflow-content-group') || clonedSvg;
                             targetGroup.appendChild(headerGroup);
                             
                             minY = minY - headerHeightOffset;
@@ -4532,11 +4532,11 @@
                 const isDark = document.body.classList.contains('dark-theme');
                 
                 // Remove pan/zoom transform from both main content group and subflow content group in cloned SVG
-                const clonedCanvasContent = clonedSvg.getElementById('canvas-content');
+                const clonedCanvasContent = clonedSvg.querySelector('#canvas-content');
                 if (clonedCanvasContent) {
                     clonedCanvasContent.removeAttribute('transform');
                 }
-                const clonedGroup = clonedSvg.getElementById('subflow-content-group');
+                const clonedGroup = clonedSvg.querySelector('#subflow-content-group');
                 if (clonedGroup) {
                     clonedGroup.removeAttribute('transform');
                 }
@@ -4612,7 +4612,7 @@
                             headerGroup.appendChild(badgeText);
                             
                             // Append header inside cloned content group
-                            const targetGroup = clonedSvg.getElementById('subflow-content-group') || clonedSvg;
+                            const targetGroup = clonedSvg.querySelector('#subflow-content-group') || clonedSvg;
                             targetGroup.appendChild(headerGroup);
                             
                             minY = minY - headerHeightOffset;
