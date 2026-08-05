@@ -498,8 +498,8 @@ body {
     margin-top: 6px;
 }
 
-.dropdown:hover .dropdown-menu {
-    display: block;
+.dropdown-menu.show {
+    display: block !important;
 }
 
 .dropdown-menu a {

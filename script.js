@@ -4311,7 +4311,28 @@
             });
         }
 
-        function exportSVGToPNG(svg, filename, sourceText) {
+        function loadImage(src) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = (err) => reject(new Error('เบราว์เซอร์ไม่สามารถโหลดรูปภาพ SVG ได้ (หรือเกิดจากการมีลิงก์ภายนอกที่ผิดนโยบายความปลอดภัย)'));
+                img.src = src;
+            });
+        }
+
+        function canvasToBlob(canvas) {
+            return new Promise((resolve, reject) => {
+                canvas.toBlob((blob) => {
+                    if (blob) {
+                        resolve(blob);
+                    } else {
+                        reject(new Error('เบราว์เซอร์สร้างข้อมูลไฟล์รูปภาพล้มเหลว (Blob เป็น null)'));
+                    }
+                }, 'image/png');
+            });
+        }
+
+        async function exportSVGToPNG(svg, filename, sourceText) {
             try {
                 const clonedSvg = svg.cloneNode(true);
                 const isDark = document.body.classList.contains('dark-theme');
@@ -4442,6 +4463,7 @@
                 clonedSvg.setAttribute('width', width);
                 clonedSvg.setAttribute('height', height);
 
+                // Set nice background color
                 const bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
                 bgRect.setAttribute('x', x);
                 bgRect.setAttribute('y', y);
@@ -4467,60 +4489,36 @@
                 const svgString = serializer.serializeToString(clonedSvg);
                 const url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgString);
 
-                const image = new Image();
+                // 1. Load image using sequential Promise (no callback nesting!)
+                const image = await loadImage(url);
+
+                // 2. Render to canvas
+                const canvas = document.createElement('canvas');
+                const scale = 2; // HD Crisp Quality
+                canvas.width = width * scale;
+                canvas.height = height * scale;
+
+                const ctx = canvas.getContext('2d');
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+                ctx.scale(scale, scale);
+                ctx.drawImage(image, 0, 0, width, height);
+
+                // 3. Convert canvas to Blob using sequential Promise (no callback nesting!)
+                const blob = await canvasToBlob(canvas);
+
+                // 4. Download file
+                const pngUrl = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.download = filename;
+                link.href = pngUrl;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
                 
-                // Asynchronous onload error catching
-                image.onload = () => {
-                    try {
-                        const canvas = document.createElement('canvas');
-                        const scale = 2; // HD Crisp Quality
-                        canvas.width = width * scale;
-                        canvas.height = height * scale;
-
-                        const ctx = canvas.getContext('2d');
-                        ctx.imageSmoothingEnabled = true;
-                        ctx.imageSmoothingQuality = 'high';
-                        ctx.scale(scale, scale);
-
-                        ctx.drawImage(image, 0, 0, width, height);
-
-                        // Asynchronous toBlob error catching and null checking
-                        canvas.toBlob((blob) => {
-                            try {
-                                if (!blob) {
-                                    throw new Error('Canvas render output is empty (toBlob returned null)');
-                                }
-                                const pngUrl = URL.createObjectURL(blob);
-                                const link = document.createElement('a');
-                                link.download = filename;
-                                link.href = pngUrl;
-                                document.body.appendChild(link);
-                                link.click();
-                                document.body.removeChild(link);
-                                
-                                setTimeout(() => URL.revokeObjectURL(pngUrl), 100);
-                            } catch (err) {
-                                console.error('PNG download generation failed:', err);
-                                alert('⚠️ เบราว์เซอร์บล็อกการเซฟไฟล์รูปภาพ: ' + err.message + '\n\nระบบจะทำการดาวน์โหลดเป็นไฟล์เวกเตอร์ (.svg) ให้แทนเพื่อความปลอดภัยครับ');
-                                downloadSVGDirect(svg, filename.replace('.png', '.svg'), sourceText);
-                            }
-                        }, 'image/png');
-                    } catch (err) {
-                        console.error('Canvas image onload drawing failed:', err);
-                        alert('⚠️ การวาดภาพผังงานขัดข้อง: ' + err.message + '\n\nระบบจะทำการดาวน์โหลดเป็นไฟล์เวกเตอร์ (.svg) ให้แทนเพื่อความปลอดภัยครับ');
-                        downloadSVGDirect(svg, filename.replace('.png', '.svg'), sourceText);
-                    }
-                };
-
-                image.onerror = (err) => {
-                    console.error('Image loading failed, falling back to raw SVG', err);
-                    alert('⚠️ เกิดข้อผิดพลาดในการโหลดรูปภาพผังงาน ระบบจะทำการดาวน์โหลดเป็นไฟล์เวกเตอร์ (.svg) ให้แทนครับ');
-                    downloadSVGDirect(svg, filename.replace('.png', '.svg'), sourceText);
-                };
-
-                image.src = url;
+                setTimeout(() => URL.revokeObjectURL(pngUrl), 100);
             } catch (e) {
-                console.error(e);
+                console.error('Export PNG failed, falling back to SVG:', e);
                 alert('⚠️ ระบบแปลงรูปภาพขัดข้อง: ' + e.message + '\n\nระบบจะทำการดาวน์โหลดเป็นไฟล์เวกเตอร์ (.svg) แทนเพื่อความปลอดภัยครับ');
                 downloadSVGDirect(svg, filename.replace('.png', '.svg'), sourceText);
             }
@@ -4676,10 +4674,36 @@
             }
         }
 
+        // Click-to-Toggle Dropdown logic for Export menu
+        const btnExport = getElem('btn-export');
+        if (btnExport) {
+            btnExport.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const dropdownMenu = btnExport.nextElementSibling;
+                if (dropdownMenu) {
+                    dropdownMenu.classList.toggle('show');
+                }
+            });
+        }
+
+        // Close dropdown menu when clicking anywhere else
+        document.addEventListener('click', (e) => {
+            const dropdownMenus = document.querySelectorAll('.dropdown-menu');
+            dropdownMenus.forEach(menu => {
+                if (!e.target.closest('.dropdown')) {
+                    menu.classList.remove('show');
+                }
+            });
+        });
+
         const exportPng = getElem('export-png');
         if (exportPng) {
             exportPng.addEventListener('click', (e) => {
                 e.preventDefault();
+                const menu = exportPng.closest('.dropdown-menu');
+                if (menu) menu.classList.remove('show');
+                
                 const svg = getElem('flow-svg');
                 if (svg) {
                     exportSVGToPNG(svg, `${(state.title || 'flowchart').replace(/\s+/g, '_')}.png`);
@@ -4691,6 +4715,9 @@
         if (exportSvg) {
             exportSvg.addEventListener('click', (e) => {
                 e.preventDefault();
+                const menu = exportSvg.closest('.dropdown-menu');
+                if (menu) menu.classList.remove('show');
+                
                 const svg = getElem('flow-svg');
                 if (svg) {
                     downloadSVGDirect(svg, `${(state.title || 'flowchart').replace(/\s+/g, '_')}.svg`);
@@ -4702,6 +4729,9 @@
         if (exportPrint) {
             exportPrint.addEventListener('click', (e) => {
                 e.preventDefault();
+                const menu = exportPrint.closest('.dropdown-menu');
+                if (menu) menu.classList.remove('show');
+                
                 window.print();
             });
         }
