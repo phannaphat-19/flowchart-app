@@ -1978,3 +1978,40 @@ input[type="color"] {
     stroke-dasharray: 8 6 !important;
     animation: lineFlowAnim 0.7s linear infinite !important;
 }
+
+/* ==========================================================================
+   Print / Save as PDF Styles
+   ========================================================================== */
+@media print {
+    /* Hide all workspace containers, sidebars, headers, bottom bars */
+    body * {
+        visibility: hidden !important;
+    }
+    /* Only make the canvas viewport and its contents visible */
+    #canvas-viewport, #canvas-viewport * {
+        visibility: visible !important;
+    }
+    #canvas-viewport {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        overflow: visible !important;
+        background: #ffffff !important;
+    }
+    /* Hide presentation controls and other floaters in print */
+    #main-presentation-overlay,
+    .zoom-controls,
+    .floating-toolbar,
+    .sidebar,
+    .inspector-panel,
+    header,
+    .bottom-pages-bar,
+    #dept-modal,
+    #subflow-modal,
+    #issue-dashboard-modal {
+        display: none !important;
+        visibility: hidden !important;
+    }
+}

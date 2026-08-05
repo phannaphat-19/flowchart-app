@@ -4311,9 +4311,10 @@
             });
         }
 
-        function exportSVGToPNG(svg, filename) {
+        function exportSVGToPNG(svg, filename, sourceText) {
             try {
                 const clonedSvg = svg.cloneNode(true);
+                const isDark = document.body.classList.contains('dark-theme');
                 
                 // Remove pan/zoom transform from both main content group and subflow content group in cloned SVG
                 const clonedCanvasContent = clonedSvg.getElementById('canvas-content');
@@ -4357,6 +4358,52 @@
                             if (nx + nw > maxX) maxX = nx + nw;
                             if (ny + nh > maxY) maxY = ny + nh;
                         });
+                        
+                        // Add an elegant source header badge at the top of the exported subflow image
+                        let headerHeightOffset = 0;
+                        if (sourceText) {
+                            headerHeightOffset = 70; // Reserve 70px above the topmost node for the source title badge
+                            
+                            const headerGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                            headerGroup.setAttribute('class', 'exported-source-header');
+                            
+                            // Center coordinates for the title badge
+                            const badgeW = Math.min(600, (maxX - minX) * 0.9 + 100);
+                            const badgeH = 36;
+                            const badgeX = minX + (maxX - minX) / 2 - badgeW / 2;
+                            const badgeY = minY - 60;
+                            
+                            // Badge Background
+                            const badgeBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                            badgeBg.setAttribute('x', badgeX);
+                            badgeBg.setAttribute('y', badgeY);
+                            badgeBg.setAttribute('width', badgeW);
+                            badgeBg.setAttribute('height', badgeH);
+                            badgeBg.setAttribute('rx', badgeH / 2);
+                            badgeBg.setAttribute('fill', isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(79, 70, 229, 0.06)');
+                            badgeBg.setAttribute('stroke', isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(79, 70, 229, 0.18)');
+                            badgeBg.setAttribute('stroke-width', '1.5');
+                            headerGroup.appendChild(badgeBg);
+                            
+                            // Badge Text
+                            const badgeText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                            badgeText.setAttribute('x', minX + (maxX - minX) / 2);
+                            badgeText.setAttribute('y', badgeY + badgeH / 2);
+                            badgeText.setAttribute('text-anchor', 'middle');
+                            badgeText.setAttribute('dominant-baseline', 'central');
+                            badgeText.setAttribute('font-size', '12px');
+                            badgeText.setAttribute('font-weight', 'bold');
+                            badgeText.setAttribute('fill', isDark ? '#38bdf8' : '#4f46e5');
+                            badgeText.textContent = `📌 ผังกระบวนการย่อยของกล่อง: ${sourceText}`;
+                            headerGroup.appendChild(badgeText);
+                            
+                            // Append header inside cloned content group to ensure proper alignment
+                            const targetGroup = clonedSvg.getElementById('subflow-content-group') || clonedSvg;
+                            targetGroup.appendChild(headerGroup);
+                            
+                            minY = minY - headerHeightOffset;
+                        }
+                        
                         const padding = 50;
                         x = minX - padding;
                         y = minY - padding;
@@ -4365,9 +4412,220 @@
                     }
                 } else {
                     // For main page flowchart: 
-                    // 1. Keep X=0 to preserve department swimlane titles on the left
-                    // 2. Keep Y=0 to show the flowchart height properly
-                    // 3. Scan nodes to determine how far right the flowchart extends
+                    const nodes = svg.querySelectorAll('.flow-node');
+                    let maxX = 1200; 
+                    nodes.forEach(node => {
+                        const bbox = node.getBBox();
+                        const transform = node.getAttribute('transform');
+                        let tx = 0;
+                        if (transform) {
+                            const match = transform.match(/translate\(([^,)]+)[, ]+([^)]+)\)/);
+                            if (match) tx = parseFloat(match[1]);
+                        }
+                        const nx = tx + bbox.x + bbox.width;
+                        if (nx > maxX) maxX = nx;
+                    });
+                    
+                    const page = getCurrentPage();
+                    let totalHeight = 600;
+                    if (page && page.departments) {
+                        totalHeight = page.departments.reduce((acc, dept) => acc + (dept.height || 160), 0);
+                    }
+                    
+                    x = 0;
+                    y = 0;
+                    width = maxX + 100;
+                    height = totalHeight;
+                }
+
+                clonedSvg.setAttribute('viewBox', `${x} ${y} ${width} ${height}`);
+                clonedSvg.setAttribute('width', width);
+                clonedSvg.setAttribute('height', height);
+
+                const bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                bgRect.setAttribute('x', x);
+                bgRect.setAttribute('y', y);
+                bgRect.setAttribute('width', width);
+                bgRect.setAttribute('height', height);
+                bgRect.setAttribute('fill', isDark ? '#0b0f19' : '#f8fafc');
+                
+                const defs = clonedSvg.querySelector('defs');
+                if (defs) {
+                    defs.after(bgRect);
+                } else {
+                    clonedSvg.insertBefore(bgRect, clonedSvg.firstChild);
+                }
+
+                const styleElement = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+                styleElement.textContent = `
+                    text { font-family: 'Prompt', 'IBM Plex Sans Thai', 'Sarabun', sans-serif !important; }
+                    .node-title, .node-text, .dept-header-text, .connection-text, .subflow-text { font-family: 'Prompt', 'IBM Plex Sans Thai', 'Sarabun', sans-serif !important; }
+                `;
+                clonedSvg.appendChild(styleElement);
+
+                const serializer = new XMLSerializer();
+                const svgString = serializer.serializeToString(clonedSvg);
+                const url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgString);
+
+                const image = new Image();
+                
+                // Asynchronous onload error catching
+                image.onload = () => {
+                    try {
+                        const canvas = document.createElement('canvas');
+                        const scale = 2; // HD Crisp Quality
+                        canvas.width = width * scale;
+                        canvas.height = height * scale;
+
+                        const ctx = canvas.getContext('2d');
+                        ctx.imageSmoothingEnabled = true;
+                        ctx.imageSmoothingQuality = 'high';
+                        ctx.scale(scale, scale);
+
+                        ctx.drawImage(image, 0, 0, width, height);
+
+                        // Asynchronous toBlob error catching and null checking
+                        canvas.toBlob((blob) => {
+                            try {
+                                if (!blob) {
+                                    throw new Error('Canvas render output is empty (toBlob returned null)');
+                                }
+                                const pngUrl = URL.createObjectURL(blob);
+                                const link = document.createElement('a');
+                                link.download = filename;
+                                link.href = pngUrl;
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                                
+                                setTimeout(() => URL.revokeObjectURL(pngUrl), 100);
+                            } catch (err) {
+                                console.error('PNG download generation failed:', err);
+                                alert('⚠️ เบราว์เซอร์บล็อกการเซฟไฟล์รูปภาพ: ' + err.message + '\n\nระบบจะทำการดาวน์โหลดเป็นไฟล์เวกเตอร์ (.svg) ให้แทนเพื่อความปลอดภัยครับ');
+                                downloadSVGDirect(svg, filename.replace('.png', '.svg'), sourceText);
+                            }
+                        }, 'image/png');
+                    } catch (err) {
+                        console.error('Canvas image onload drawing failed:', err);
+                        alert('⚠️ การวาดภาพผังงานขัดข้อง: ' + err.message + '\n\nระบบจะทำการดาวน์โหลดเป็นไฟล์เวกเตอร์ (.svg) ให้แทนเพื่อความปลอดภัยครับ');
+                        downloadSVGDirect(svg, filename.replace('.png', '.svg'), sourceText);
+                    }
+                };
+
+                image.onerror = (err) => {
+                    console.error('Image loading failed, falling back to raw SVG', err);
+                    alert('⚠️ เกิดข้อผิดพลาดในการโหลดรูปภาพผังงาน ระบบจะทำการดาวน์โหลดเป็นไฟล์เวกเตอร์ (.svg) ให้แทนครับ');
+                    downloadSVGDirect(svg, filename.replace('.png', '.svg'), sourceText);
+                };
+
+                image.src = url;
+            } catch (e) {
+                console.error(e);
+                alert('⚠️ ระบบแปลงรูปภาพขัดข้อง: ' + e.message + '\n\nระบบจะทำการดาวน์โหลดเป็นไฟล์เวกเตอร์ (.svg) แทนเพื่อความปลอดภัยครับ');
+                downloadSVGDirect(svg, filename.replace('.png', '.svg'), sourceText);
+            }
+        }
+
+        function downloadSVGDirect(svg, filename, sourceText) {
+            try {
+                const clonedSvg = svg.cloneNode(true);
+                const isDark = document.body.classList.contains('dark-theme');
+                
+                // Remove pan/zoom transform from both main content group and subflow content group in cloned SVG
+                const clonedCanvasContent = clonedSvg.getElementById('canvas-content');
+                if (clonedCanvasContent) {
+                    clonedCanvasContent.removeAttribute('transform');
+                }
+                const clonedGroup = clonedSvg.getElementById('subflow-content-group');
+                if (clonedGroup) {
+                    clonedGroup.removeAttribute('transform');
+                }
+
+                const gridRects = clonedSvg.querySelectorAll('rect[fill^="url(#"]');
+                gridRects.forEach(r => r.remove());
+
+                const isSubflow = (svg.id === 'large-subflow-svg');
+                let x = 0, y = 0, width = 800, height = 600;
+                
+                if (isSubflow) {
+                    // For subflow modal: crop tightly around active subnodes
+                    const nodes = svg.querySelectorAll('.sub-node-elem');
+                    if (nodes.length > 0) {
+                        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                        nodes.forEach(node => {
+                            const bbox = node.getBBox();
+                            const transform = node.getAttribute('transform');
+                            let tx = 0, ty = 0;
+                            if (transform) {
+                                const match = transform.match(/translate\(([^,)]+)[, ]+([^)]+)\)/);
+                                if (match) {
+                                    tx = parseFloat(match[1]);
+                                    ty = parseFloat(match[2]);
+                                }
+                            }
+                            const nx = tx + bbox.x;
+                            const ny = ty + bbox.y;
+                            const nw = bbox.width;
+                            const nh = bbox.height;
+                            if (nx < minX) minX = nx;
+                            if (ny < minY) minY = ny;
+                            if (nx + nw > maxX) maxX = nx + nw;
+                            if (ny + nh > maxY) maxY = ny + nh;
+                        });
+                        
+                        // Add an elegant source header badge at the top of the exported subflow SVG
+                        let headerHeightOffset = 0;
+                        if (sourceText) {
+                            headerHeightOffset = 70; // Reserve 70px above the topmost node for the source title badge
+                            
+                            const headerGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                            headerGroup.setAttribute('class', 'exported-source-header');
+                            
+                            // Center coordinates for the title badge
+                            const badgeW = Math.min(600, (maxX - minX) * 0.9 + 100);
+                            const badgeH = 36;
+                            const badgeX = minX + (maxX - minX) / 2 - badgeW / 2;
+                            const badgeY = minY - 60;
+                            
+                            // Badge Background
+                            const badgeBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                            badgeBg.setAttribute('x', badgeX);
+                            badgeBg.setAttribute('y', badgeY);
+                            badgeBg.setAttribute('width', badgeW);
+                            badgeBg.setAttribute('height', badgeH);
+                            badgeBg.setAttribute('rx', badgeH / 2);
+                            badgeBg.setAttribute('fill', isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(79, 70, 229, 0.06)');
+                            badgeBg.setAttribute('stroke', isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(79, 70, 229, 0.18)');
+                            badgeBg.setAttribute('stroke-width', '1.5');
+                            headerGroup.appendChild(badgeBg);
+                            
+                            // Badge Text
+                            const badgeText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                            badgeText.setAttribute('x', minX + (maxX - minX) / 2);
+                            badgeText.setAttribute('y', badgeY + badgeH / 2);
+                            badgeText.setAttribute('text-anchor', 'middle');
+                            badgeText.setAttribute('dominant-baseline', 'central');
+                            badgeText.setAttribute('font-size', '12px');
+                            badgeText.setAttribute('font-weight', 'bold');
+                            badgeText.setAttribute('fill', isDark ? '#38bdf8' : '#4f46e5');
+                            badgeText.textContent = `📌 ผังกระบวนการย่อยของกล่อง: ${sourceText}`;
+                            headerGroup.appendChild(badgeText);
+                            
+                            // Append header inside cloned content group
+                            const targetGroup = clonedSvg.getElementById('subflow-content-group') || clonedSvg;
+                            targetGroup.appendChild(headerGroup);
+                            
+                            minY = minY - headerHeightOffset;
+                        }
+                        
+                        const padding = 50;
+                        x = minX - padding;
+                        y = minY - padding;
+                        width = (maxX - minX) + padding * 2;
+                        height = (maxY - minY) + padding * 2;
+                    }
+                } else {
+                    // For main page flowchart: 
                     const nodes = svg.querySelectorAll('.flow-node');
                     let maxX = 1200; // Default min width
                     nodes.forEach(node => {
@@ -4399,179 +4657,23 @@
                 clonedSvg.setAttribute('width', width);
                 clonedSvg.setAttribute('height', height);
 
-                // Set nice background color
-                const isDark = document.body.classList.contains('dark-theme');
-                const bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-                bgRect.setAttribute('x', x);
-                bgRect.setAttribute('y', y);
-                bgRect.setAttribute('width', width);
-                bgRect.setAttribute('height', height);
-                bgRect.setAttribute('fill', isDark ? '#0b0f19' : '#f8fafc');
-                
-                const defs = clonedSvg.querySelector('defs');
-                if (defs) {
-                    defs.after(bgRect);
-                } else {
-                    clonedSvg.insertBefore(bgRect, clonedSvg.firstChild);
-                }
-
-                // Inject font family rules for standalone image rendering
-                const styleElement = document.createElementNS('http://www.w3.org/2000/svg', 'style');
-                styleElement.textContent = `
-                    text {
-                        font-family: 'Prompt', 'IBM Plex Sans Thai', 'Sarabun', sans-serif !important;
-                    }
-                    .node-title, .node-text, .dept-header-text, .connection-text, .subflow-text {
-                        font-family: 'Prompt', 'IBM Plex Sans Thai', 'Sarabun', sans-serif !important;
-                    }
-                `;
-                clonedSvg.appendChild(styleElement);
-
                 const serializer = new XMLSerializer();
                 const svgString = serializer.serializeToString(clonedSvg);
+                const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+                const url = URL.createObjectURL(svgBlob);
+
+                const link = document.createElement('a');
+                link.download = filename;
+                link.href = url;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
                 
-                // Safe Unicode Base64 encoding
-                const base64Svg = btoa(unescape(encodeURIComponent(svgString)));
-                const url = 'data:image/svg+xml;base64,' + base64Svg;
-
-                const image = new Image();
-                image.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const scale = 2; // HD Crisp Quality
-                    canvas.width = width * scale;
-                    canvas.height = height * scale;
-
-                    const ctx = canvas.getContext('2d');
-                    ctx.imageSmoothingEnabled = true;
-                    ctx.imageSmoothingQuality = 'high';
-                    ctx.scale(scale, scale);
-
-                    ctx.drawImage(image, 0, 0, width, height);
-
-                    // Use toBlob instead of toDataURL to prevent browser truncation/corruption of large images
-                    canvas.toBlob((blob) => {
-                        const pngUrl = URL.createObjectURL(blob);
-                        const link = document.createElement('a');
-                        link.download = filename;
-                        link.href = pngUrl;
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                        
-                        setTimeout(() => URL.revokeObjectURL(pngUrl), 100);
-                    }, 'image/png');
-                };
-
-                image.onerror = (err) => {
-                    console.error('Image render failed, falling back to raw SVG', err);
-                    alert('⚠️ เกิดข้อผิดพลาดทางเทคนิคในการแปลงรูปภาพ ระบบจะดาวน์โหลดเป็นไฟล์เวกเตอร์ (.svg) ให้แทนครับ');
-                    downloadSVGDirect(svg, filename.replace('.png', '.svg'));
-                };
-
-                image.src = url;
+                setTimeout(() => URL.revokeObjectURL(url), 100);
             } catch (e) {
                 console.error(e);
-                alert('⚠️ ระบบส่งออกขัดข้อง จะทำการดาวน์โหลดเป็นไฟล์เวกเตอร์แทนครับ');
-                downloadSVGDirect(svg, filename.replace('.png', '.svg'));
+                alert('⚠️ การดาวน์โหลดไฟล์ SVG ขัดข้อง: ' + e.message);
             }
-        }
-
-        function downloadSVGDirect(svg, filename) {
-            const clonedSvg = svg.cloneNode(true);
-            
-            // Remove pan/zoom transform from both main content group and subflow content group in cloned SVG
-            const clonedCanvasContent = clonedSvg.getElementById('canvas-content');
-            if (clonedCanvasContent) {
-                clonedCanvasContent.removeAttribute('transform');
-            }
-            const clonedGroup = clonedSvg.getElementById('subflow-content-group');
-            if (clonedGroup) {
-                clonedGroup.removeAttribute('transform');
-            }
-
-            const gridRects = clonedSvg.querySelectorAll('rect[fill^="url(#"]');
-            gridRects.forEach(r => r.remove());
-
-            const isSubflow = (svg.id === 'large-subflow-svg');
-            let x = 0, y = 0, width = 800, height = 600;
-            
-            if (isSubflow) {
-                // For subflow modal: crop tightly around active subnodes
-                const nodes = svg.querySelectorAll('.sub-node-elem');
-                if (nodes.length > 0) {
-                    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-                    nodes.forEach(node => {
-                        const bbox = node.getBBox();
-                        const transform = node.getAttribute('transform');
-                        let tx = 0, ty = 0;
-                        if (transform) {
-                            const match = transform.match(/translate\(([^,)]+)[, ]+([^)]+)\)/);
-                            if (match) {
-                                tx = parseFloat(match[1]);
-                                ty = parseFloat(match[2]);
-                            }
-                        }
-                        const nx = tx + bbox.x;
-                        const ny = ty + bbox.y;
-                        const nw = bbox.width;
-                        const nh = bbox.height;
-                        if (nx < minX) minX = nx;
-                        if (ny < minY) minY = ny;
-                        if (nx + nw > maxX) maxX = nx + nw;
-                        if (ny + nh > maxY) maxY = ny + nh;
-                    });
-                    const padding = 50;
-                    x = minX - padding;
-                    y = minY - padding;
-                    width = (maxX - minX) + padding * 2;
-                    height = (maxY - minY) + padding * 2;
-                }
-            } else {
-                // For main page flowchart: 
-                // 1. Keep X=0 to preserve department swimlane titles on the left
-                // 2. Keep Y=0 to show the flowchart height properly
-                // 3. Scan nodes to determine how far right the flowchart extends
-                const nodes = svg.querySelectorAll('.flow-node');
-                let maxX = 1200; // Default min width
-                nodes.forEach(node => {
-                    const bbox = node.getBBox();
-                    const transform = node.getAttribute('transform');
-                    let tx = 0;
-                    if (transform) {
-                        const match = transform.match(/translate\(([^,)]+)[, ]+([^)]+)\)/);
-                        if (match) tx = parseFloat(match[1]);
-                    }
-                    const nx = tx + bbox.x + bbox.width;
-                    if (nx > maxX) maxX = nx;
-                });
-                
-                // Determine total height of all lanes on the active page
-                const page = getCurrentPage();
-                let totalHeight = 600;
-                if (page && page.departments) {
-                    totalHeight = page.departments.reduce((acc, dept) => acc + (dept.height || 160), 0);
-                }
-                
-                x = 0;
-                y = 0;
-                width = maxX + 100; // Extra right-padding
-                height = totalHeight;
-            }
-
-            clonedSvg.setAttribute('viewBox', `${x} ${y} ${width} ${height}`);
-            clonedSvg.setAttribute('width', width);
-            clonedSvg.setAttribute('height', height);
-
-            const serializer = new XMLSerializer();
-            const svgString = serializer.serializeToString(clonedSvg);
-            const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
-            const url = URL.createObjectURL(svgBlob);
-
-            const link = document.createElement('a');
-            link.download = filename;
-            link.href = url;
-            link.click();
-            URL.revokeObjectURL(url);
         }
 
         const exportPng = getElem('export-png');
@@ -4596,15 +4698,23 @@
             });
         }
 
+        const exportPrint = getElem('export-print');
+        if (exportPrint) {
+            exportPrint.addEventListener('click', (e) => {
+                e.preventDefault();
+                window.print();
+            });
+        }
+
         const btnExportSubPng = getElem('btn-export-sub-png');
         if (btnExportSubPng) {
             btnExportSubPng.addEventListener('click', (e) => {
                 e.preventDefault();
                 const subSvg = getElem('large-subflow-svg');
                 const targetNode = activeSubflowCurrentNode || (subflowModalStack.length > 0 ? subflowModalStack[subflowModalStack.length - 1] : null);
-                const subflowTitle = targetNode ? (targetNode.details?.subflowTitle || targetNode.text || 'subflow').replace(/\s+/g, '_') : 'subflow';
+                const subflowTitle = targetNode ? (targetNode.details?.subflowTitle || targetNode.text || 'subflow') : 'subflow';
                 if (subSvg) {
-                    exportSVGToPNG(subSvg, `${subflowTitle}.png`);
+                    exportSVGToPNG(subSvg, `ผังย่อย_${subflowTitle.replace(/\s+/g, '_')}.png`, subflowTitle);
                 } else {
                     alert('⚠️ ไม่พบเนื้อหาผังงานย่อยที่จะทำการส่งออกรูปภาพครับ');
                 }
