@@ -193,10 +193,38 @@
 
     function loadAutoSaveData() {
         try {
-            const raw = localStorage.getItem(AUTOSAVE_KEY) || localStorage.getItem('flowstudio_pro_autosave_data_v2');
+            const possibleKeys = [
+                'flowstudio_pro_autosave_data_v3',
+                'flowstudio_pro_autosave_data_v2',
+                'flowstudio_pro_autosave_data_v1',
+                'flowstudio_pro_autosave_data',
+                'flowstudio_autosave',
+                'flowchart_autosave_data',
+                'flowchart_app_data'
+            ];
+
+            for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i);
+                if (k && (k.includes('autosave') || k.includes('flowstudio') || k.includes('flowchart')) && !possibleKeys.includes(k)) {
+                    possibleKeys.push(k);
+                }
+            }
+
+            let raw = null;
+            for (const k of possibleKeys) {
+                const val = localStorage.getItem(k);
+                if (val && val.includes('pages')) {
+                    raw = val;
+                    break;
+                }
+            }
+
             if (!raw) return false;
             const data = JSON.parse(raw);
             if (data && Array.isArray(data.pages) && data.pages.length > 0) {
+                const hasNodes = data.pages.some(p => p.nodes && p.nodes.length > 0);
+                if (!hasNodes) return false; // Fallback to createStarterNodes if blank!
+
                 state.title = data.title || state.title;
                 state.pages = data.pages;
                 state.activePageIndex = Math.min(data.activePageIndex || 0, state.pages.length - 1);
@@ -213,9 +241,10 @@
                     const timeStr = `${hours}:${minutes}:${seconds}`;
                     const badge = getElem('autosave-status-badge');
                     if (badge) {
-                        badge.innerHTML = `<i class="fa-solid fa-cloud-check" style="font-size:12px; color:#10b981;"></i> ⚡ บันทึกแล้ว ${timeStr} น.`;
+                        badge.innerHTML = `<i class="fa-solid fa-cloud-check" style="font-size:12px; color:#10b981;"></i> ⚡ โหลดผังงานแล้ว ${timeStr} น.`;
                     }
                 }
+                saveAutoSaveDataNow();
                 return true;
             }
         } catch (e) {
